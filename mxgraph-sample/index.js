@@ -138,6 +138,8 @@ function main (container) {
         }
         console.log(`id=${v.id} label=${label} text=${text}`)
       })
+
+      console.log(graph.getChildEdges(parent))
     })
   }
 }
