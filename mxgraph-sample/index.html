@@ -5,6 +5,13 @@ Windows example for mxGraph. This example demonstrates using
 the mxWindow class for displaying windows.
 
 元にしたソース: mxgraph\javascript\examples\windows.html
+
+$ npm install
+
+$ npm run build
+または
+$ npm run watch
+
 -->
 <html>
 <head>
@@ -32,13 +39,10 @@ the mxWindow class for displaying windows.
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 
-<!-- Example code -->
 <script type="text/javascript" src="dist/index.bundle.js"></script>
 </head>
 
 <!-- Page passes the container for the graph to the program -->
-
-<!-- <body onload="main(document.getElementById('graphContainer'))"> -->
 <body>
   <!-- <label for='spanId'>Id:</label><input type='text' id='span-id' class='short'> -->
   <label for='spanLabel'>Label:</label><input type='text' id='span-label'>

@@ -68,6 +68,9 @@ function main (container) {
     graph.setTooltips(true)
     graph.setPanning(true)
     graph.setConnectable(true)
+    graph.setAutoSizeCells(true)
+
+    // graph.autoSizeCellsOnAdd = true
 
     // セルのラベルの編集を禁止する
     graph.setCellsEditable(false)
@@ -91,8 +94,15 @@ function main (container) {
 
     // エッジ・スタイルは要検討
     var style = graph.getStylesheet().getDefaultEdgeStyle()
-    // style[mxConstants.STYLE_ROUNDED] = true
-    style[mxConstants.STYLE_EDGE] = mxEdgeStyle.ElbowConnector
+    style[mxConstants.STYLE_ROUNDED] = true
+    // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.ElbowConnector
+    // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.SideToSide
+    // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.TopToBottom
+    // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.EntityRelation
+    // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.Loop
+    // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.SegmentConnector
+    style[mxConstants.STYLE_EDGE] = mxEdgeStyle.OrthConnector
+
     graph.alternateEdgeStyle = 'elbow=vertical'
 
     mxEvent.disableContextMenu(container)
@@ -120,7 +130,37 @@ function main (container) {
     })
 
     graph.addListener(mxEvent.CELL_CONNECTED, (g, event) => {
-      console.log(event)
+      console.log('CELL_CONNECTED')
+      const props = event.properties
+      const source = props.source ? 'source' : 'target'
+      console.log(`  edge id=${props.edge.id} geometry=${JSON.stringify(props.edge.geometry)}`)
+      console.log(`  vertex id=${props.terminal.id} ${source}, geometry=${JSON.stringify(props.terminal.geometry)}`)
+    })
+
+    graph.addListener(mxEvent.CELLS_ADDED, (g, event) => {
+      console.log('CELLS_ADDED')
+      event.properties.cells.forEach(cell => {
+        let type = 'unknown'
+        if (cell.vertex) {
+          type = 'vertex'
+        } else if (cell.edge) {
+          type = 'edge'
+        }
+        console.log(`  ${type} id=${cell.id} geometry=${JSON.stringify(cell.geometry)}`)
+        })
+    })
+
+    graph.addListener(mxEvent.CLICK, (g, event) => {
+      // console.log('CLICK', event)
+    })
+
+    graph.addListener(mxEvent.DOUBLE_CLICK, (g, event) => {
+      // console.log('DOUBLE_CLICK', event)
+      const props = event.properties
+      if (props.cell && props.cell.edge) {
+        console.log('DOUBLE_CLICK')
+
+      }
     })
 
     // xmlエクスポートのハンドラー
