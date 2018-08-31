@@ -6,7 +6,7 @@ module.exports = (env, argv) => {
   return {
     mode: process.env.NODE_ENV || 'development',
     entry: {
-      'index': 'index.js'
+      'index': './index.js'
     },
     output: {
       path: path.resolve(__dirname, 'dist'),

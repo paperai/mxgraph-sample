@@ -1,3 +1,5 @@
+var xmlbuilder = require('xmlbuilder')
+
 // windowの左上コーナーの位置と幅、高さ
 const WINDOW_X = 50
 const WINDOW_Y = 50
@@ -123,7 +125,13 @@ function main (container) {
 
     // xmlエクスポートのハンドラー
     $('#export-xml').click(() => {
-      console.log(graph.getChildVertices(parent))
+
+      const annotations = xmlbuilder.create('annotations')
+      const spans = annotations.ele('spans')
+      const relations = annotations.ele('relations')
+
+      // console.log(graph.getChildVertices(parent))
+
       graph.getChildVertices(parent).forEach(v => {
         let value = v.value
         let label = '', text = ''
@@ -136,10 +144,22 @@ function main (container) {
             text = vv[1]
           }
         }
-        console.log(`id=${v.id} label=${label} text=${text}`)
+
+        // console.log(`id=${v.id} label=${label} text=${text}`)
+        spans.importDocument(xmlbuilder.create('item').att({id: v.id, label, text}))
       })
 
-      console.log(graph.getChildEdges(parent))
+      // console.log(graph.getChildEdges(parent))
+
+      graph.getChildEdges(parent).forEach(edge => {
+        relations.importDocument(xmlbuilder.create('item').att({head: edge.source.id, tail: edge.target.id, label: 'undefined'}))
+      })
+
+      console.log(annotations.end({ pretty: true }))
     })
   }
 }
+
+$(() => {
+  main(document.getElementById('graphContainer'))
+})
