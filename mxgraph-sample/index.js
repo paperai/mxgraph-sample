@@ -203,8 +203,8 @@ function main (container) {
 
       // ファイルにダウンロードする
       const a = $('<a>').attr({
-        href: URL.createObjectURL(new Blob([xml])),
-        // href: URL.createObjectURL(new Blob([xml2])),
+        // href: URL.createObjectURL(new Blob([xml])),
+        href: URL.createObjectURL(new Blob(['<?xml version="1.0"?>\n' + xml2])),
         download: 'annotations.xml'
       }).appendTo($('body'))
       a[0].click()
