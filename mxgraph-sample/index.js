@@ -134,23 +134,25 @@ function main (container) {
       console.log('CELL_CONNECTED')
       const props = event.properties
       const source = props.source ? 'source' : 'target'
-      console.log(`  edge id=${props.edge.id} geometry=${JSON.stringify(props.edge.geometry)}`)
-      console.log(`  vertex id=${props.terminal.id} ${source}, geometry=${JSON.stringify(props.terminal.geometry)}`)
+      console.log(`  edge id=${props.edge.id} geometry=${JSON.stringify(props.edge.getGeometry())}`)
+      console.log(`  vertex id=${props.terminal.id} ${source}, geometry=${JSON.stringify(props.terminal.getGeometry())}`)
     })
 
     graph.addListener(mxEvent.CELLS_ADDED, (g, event) => {
       console.log('CELLS_ADDED')
       event.properties.cells.forEach(cell => {
         let type = 'unknown'
-        if (cell.vertex) {
+        if (cell.isVertex()) {
           type = 'vertex'
-        } else if (cell.edge) {
+        } else if (cell.isEdge()) {
           type = 'edge'
         }
-        console.log(`  ${type} id=${cell.id} geometry=${JSON.stringify(cell.geometry)}`)
+        console.log(`  ${type} id=${cell.id} geometry=${JSON.stringify(cell.getGeometry())}`)
         })
     })
 
+    // in-place editing
+    // ラベルの位置は要調整
     graph.dblClick = (event, cell) => {
       if (cell && graph.model.isEdge(cell)) {
         graph.startEditingAtCell(cell)
@@ -159,11 +161,9 @@ function main (container) {
 
     // xmlエクスポートのハンドラー
     $('#export-xml').click(() => {
-
       const annotations = xmlbuilder.create('annotations')
       const spans = annotations.ele('spans')
       const relations = annotations.ele('relations')
-
       // console.log(graph.getChildVertices(parent))
 
       graph.getChildVertices(parent).forEach(v => {
@@ -179,17 +179,36 @@ function main (container) {
           }
         }
 
-        // console.log(`id=${v.id} label=${label} text=${text}`)
         spans.importDocument(xmlbuilder.create('item').att({id: v.id, label, text}))
       })
 
-      // console.log(graph.getChildEdges(parent))
-
+      console.log(graph.getChildEdges(parent))
       graph.getChildEdges(parent).forEach(edge => {
-        relations.importDocument(xmlbuilder.create('item').att({head: edge.source.id, tail: edge.target.id, label: 'undefined'}))
+        relations.importDocument(xmlbuilder.create('item').att({head: edge.source.id, tail: edge.target.id, label: edge.value ? edge.value : 'undefined'}))
       })
 
-      console.log(annotations.end({ pretty: true }))
+      // consoleにxmlを出力(debug)
+      // 独自フォーマット
+      const xml = annotations.end({ pretty: true })
+      console.log(xml)
+
+      const enc = new mxCodec(mxUtils.createXmlDocument())
+      const node = enc.encode(graph.getModel())
+      // xml2 = mxUtils.getXml(node)
+      xml2 = mxUtils.getPrettyXml(node)
+
+      // consoleにxml2を出力(debug)
+      // 内部フォーマット 後ほどインポート可能
+      console.log(xml2)
+
+      // ファイルにダウンロードする
+      const a = $('<a>').attr({
+        href: URL.createObjectURL(new Blob([xml])),
+        // href: URL.createObjectURL(new Blob([xml2])),
+        download: 'annotations.xml'
+      }).appendTo($('body'))
+      a[0].click()
+      a.remove()
     })
   }
 }
