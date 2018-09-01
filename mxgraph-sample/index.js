@@ -7,8 +7,8 @@ const WINDOW_WIDTH = 1200
 const WINDOW_HEIGHT = 600
 
 // ノードの幅と高さ
-const CELL_WIDTH = 80
-const CELL_HEIGHT = 30
+const VERTEX_WIDTH = 80
+const VERTEX_HEIGHT = 30
 
 // 定義しているカラースタイル数
 const COLOR_STYLE_MAX = 4
@@ -62,6 +62,10 @@ function main (container) {
     // container extends to the parent div inside the window
     var wnd = new mxWindow('mxGraph sample program', container, WINDOW_X, WINDOW_Y, WINDOW_WIDTH, WINDOW_HEIGHT, true, true)
 
+    wnd.setMaximizable(true)
+    wnd.setResizable(true)
+    wnd.setVisible(true)
+
     // Creates the graph inside the given container
     var graph = new mxGraph(container)
 
@@ -92,9 +96,10 @@ function main (container) {
       graph.getStylesheet().putCellStyle(key, colorStyles[key])
     })
 
-    // エッジ・スタイルは要検討
     var style = graph.getStylesheet().getDefaultEdgeStyle()
     style[mxConstants.STYLE_ROUNDED] = true
+
+    // エッジ・スタイルは要検討
     // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.ElbowConnector
     // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.SideToSide
     // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.TopToBottom
@@ -111,10 +116,6 @@ function main (container) {
     // is normally the first child of the root (ie. layer 0).
     var parent = graph.getDefaultParent()
 
-    wnd.setMaximizable(true)
-    wnd.setResizable(true)
-    wnd.setVisible(true)
-
     // mxLog.show()
 
     // スパン追加のハンドラー
@@ -123,7 +124,7 @@ function main (container) {
       try {
         const label = $('#span-label').val() + '\n' + $('#span-text').val()
         const color = Object.keys(colorStyles)[randomInt(COLOR_STYLE_MAX)]
-        graph.insertVertex(parent, null, label, 0, 0, CELL_WIDTH, CELL_HEIGHT, color)
+        graph.insertVertex(parent, null, label, 0, 0, VERTEX_WIDTH, VERTEX_HEIGHT, color)
       } finally {
         graph.getModel().endUpdate()
       }
@@ -150,18 +151,11 @@ function main (container) {
         })
     })
 
-    graph.addListener(mxEvent.CLICK, (g, event) => {
-      // console.log('CLICK', event)
-    })
-
-    graph.addListener(mxEvent.DOUBLE_CLICK, (g, event) => {
-      // console.log('DOUBLE_CLICK', event)
-      const props = event.properties
-      if (props.cell && props.cell.edge) {
-        console.log('DOUBLE_CLICK')
-
+    graph.dblClick = (event, cell) => {
+      if (cell && graph.model.isEdge(cell)) {
+        graph.startEditingAtCell(cell)
       }
-    })
+    }
 
     // xmlエクスポートのハンドラー
     $('#export-xml').click(() => {
