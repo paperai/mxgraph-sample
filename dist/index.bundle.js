@@ -308,7 +308,7 @@ function main (container) {
   }
 }
 
-$(() => {
+$(window).on('load', () => {
   main(document.getElementById('graphContainer'))
 })
 
