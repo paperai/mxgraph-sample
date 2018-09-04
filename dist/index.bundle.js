@@ -249,10 +249,29 @@ function main (container) {
     // in-place editing
     // ラベルの位置は要調整
     graph.dblClick = (event, cell) => {
-      if (cell && graph.model.isEdge(cell)) {
+      if (cell && graph.getModel().isEdge(cell)) {
         graph.startEditingAtCell(cell)
       }
     }
+
+    // shapeオプションの設定
+    const shapeList = {
+      'Actor': 1,
+      'Cloud': 1,
+      'Cylinder': 1,
+      'DoubleEllipse': 1,
+      'Ellipse': 1,
+      'Hexagon': 2, 
+      'RectangleShape': 1,
+      'Rhombus': 1,
+      'Swimlane': 1,
+      'Triangle': 2,
+    }
+
+    const shape = $('select#shape')
+    Object.keys(shapeList).forEach(key => {
+      $('<option>').attr('value', key).text(key).appendTo(shape)
+    })
 
     // xmlエクスポートのハンドラー
     $('#export-xml').click(() => {
@@ -305,6 +324,24 @@ function main (container) {
       a[0].click()
       a.remove()
     })
+
+    // xmlインポートのハンドラー
+    $('#import-xml :file').change(event => {
+      // graph.getModel().clear()
+
+      const files = Array.from(event.target.files)
+      if (files.length === 1) {
+        const file = files[0] 
+        console.log(file)
+      } else {
+        alert('xmlファイルを選択してください。')
+      }
+    })
+
+        // [new mxRectangle(0, 0, VERTEX_WIDTH, VERTEX_HEIGHT), '#e5c095', '#000000', 1]
+
+
+
   }
 }
 
