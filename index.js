@@ -233,11 +233,26 @@ function main (container) {
     // xmlインポートのハンドラー
     $('#import-xml :file').change(event => {
       // graph.getModel().clear()
-
       const files = Array.from(event.target.files)
-      if (files.length === 1) {
-        const file = files[0] 
-        console.log(file)
+      if (files.length >= 1) {
+        new Promise((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onload = event => {
+            resolve(event.target.result)
+          }
+          reader.readAsText(files[0] )
+        }).then(result => {
+          return new Blob([result])
+        }).then(blob => {
+          return window.URL.createObjectURL(blob)
+        }).then(url => {
+          return mxUtils.load(url).getXml()
+        }).then(xmlDoc => {
+          const node = xmlDoc.documentElement
+          const dec = new mxCodec(node.ownerDocument)
+          dec.decode(node, graph.getModel())
+          parent = graph.getDefaultParent()
+        })
       } else {
         alert('xmlファイルを選択してください。')
       }
