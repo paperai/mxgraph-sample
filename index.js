@@ -38,12 +38,48 @@ const colorStyles = {
   }
 }
 
+// shapeの一覧
+const shapeList = [
+  'actor',
+  'cloud',
+  'cylinder',
+  'doubleEllipse',
+  'ellipse',
+  'hexagon',
+  'rectangle',
+  'rhombus',
+  'swimlane',
+  'triangle'
+]
+
 /**
  * 0 <= random < max の範囲の整数の乱数を生成。
  * @param {Integer} max 
  */
-function randomInt(max) {
+function randomInt (max) {
   return Math.floor(Math.random() * Math.floor(max))
+}
+
+/**
+ * カラーを登録する
+ * @param {mxGraph} graph 
+ */
+function registerColors (graph) {
+  Object.keys(colorStyles).forEach(key => {
+    graph.getStylesheet().putCellStyle(key, colorStyles[key])
+  })
+}
+
+/**
+ * シェイプを登録する
+ * @param {mxGraph} graph 
+ */
+function registerShapes (graph) {
+  shapeList.forEach(key => {
+    const style = new Object()
+    style[mxConstants.STYLE_SHAPE] = key
+    graph.getStylesheet().putCellStyle(key, style)
+  })
 }
 
 // Program starts here. Creates a sample graph in the
@@ -57,212 +93,211 @@ function main (container) {
   if (!mxClient.isBrowserSupported()) {
     // Displays an error message if the browser is not supported.
     mxUtils.error('Browser is not supported!', 200, false)
-  } else {
-    // Note that we're using the container scrollbars for the graph so that the
-    // container extends to the parent div inside the window
-    var wnd = new mxWindow('mxGraph sample program', container, WINDOW_X, WINDOW_Y, WINDOW_WIDTH, WINDOW_HEIGHT, true, true)
-
-    wnd.setMaximizable(true)
-    wnd.setResizable(true)
-    wnd.setVisible(true)
-
-    // Creates the graph inside the given container
-    var graph = new mxGraph(container)
-
-    graph.setTooltips(true)
-    graph.setPanning(true)
-    graph.setConnectable(true)
-    graph.setAutoSizeCells(true)
-
-    // graph.autoSizeCellsOnAdd = true
-
-    // セルのラベルの編集を禁止する
-    graph.setCellsEditable(false)
-
-    var layout = new mxParallelEdgeLayout(graph)
-    var layoutMgr = new mxLayoutManager(graph)
-
-    layoutMgr.getLayout = cell => {
-      if (cell.getChildCount() > 0) {
-        return layout
-      }
-    }
-
-    var rubberband = new mxRubberband(graph)
-    new mxKeyHandler(graph)
-
-    // カラースタイルを設定
-    Object.keys(colorStyles).forEach(key => {
-      graph.getStylesheet().putCellStyle(key, colorStyles[key])
-    })
-
-    var style = graph.getStylesheet().getDefaultEdgeStyle()
-    style[mxConstants.STYLE_ROUNDED] = true
-
-    // エッジ・スタイルは要検討
-    // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.ElbowConnector
-    // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.SideToSide
-    // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.TopToBottom
-    // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.EntityRelation
-    // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.Loop
-    // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.SegmentConnector
-    style[mxConstants.STYLE_EDGE] = mxEdgeStyle.OrthConnector
-
-    graph.alternateEdgeStyle = 'elbow=vertical'
-
-    mxEvent.disableContextMenu(container)
-
-    // Gets the default parent for inserting new cells. This
-    // is normally the first child of the root (ie. layer 0).
-    var parent = graph.getDefaultParent()
-
-    // mxLog.show()
-
-    // スパン追加のハンドラー
-    $('#add-span').click(() => {
-      graph.getModel().beginUpdate()
-      try {
-        const label = $('#span-label').val() + '\n' + $('#span-text').val()
-        const color = Object.keys(colorStyles)[randomInt(COLOR_STYLE_MAX)]
-        graph.insertVertex(parent, null, label, 0, 0, VERTEX_WIDTH, VERTEX_HEIGHT, color)
-      } finally {
-        graph.getModel().endUpdate()
-      }
-    })
-
-    graph.addListener(mxEvent.CELL_CONNECTED, (g, event) => {
-      console.log('CELL_CONNECTED')
-      const props = event.properties
-      const source = props.source ? 'source' : 'target'
-      console.log(`  edge id=${props.edge.id} geometry=${JSON.stringify(props.edge.getGeometry())}`)
-      console.log(`  vertex id=${props.terminal.id} ${source}, geometry=${JSON.stringify(props.terminal.getGeometry())}`)
-    })
-
-    graph.addListener(mxEvent.CELLS_ADDED, (g, event) => {
-      console.log('CELLS_ADDED')
-      event.properties.cells.forEach(cell => {
-        let type = 'unknown'
-        if (cell.isVertex()) {
-          type = 'vertex'
-        } else if (cell.isEdge()) {
-          type = 'edge'
-        }
-        console.log(`  ${type} id=${cell.id} geometry=${JSON.stringify(cell.getGeometry())}`)
-        })
-    })
-
-    // in-place editing
-    // ラベルの位置は要調整
-    graph.dblClick = (event, cell) => {
-      if (cell && graph.getModel().isEdge(cell)) {
-        graph.startEditingAtCell(cell)
-      }
-    }
-
-    // shapeオプションの設定
-    const shapeList = {
-      'Actor': 1,
-      'Cloud': 1,
-      'Cylinder': 1,
-      'DoubleEllipse': 1,
-      'Ellipse': 1,
-      'Hexagon': 2, 
-      'RectangleShape': 1,
-      'Rhombus': 1,
-      'Swimlane': 1,
-      'Triangle': 2,
-    }
-
-    const shape = $('select#shape')
-    Object.keys(shapeList).forEach(key => {
-      $('<option>').attr('value', key).text(key).appendTo(shape)
-    })
-
-    // xmlエクスポートのハンドラー
-    $('#export-xml').click(() => {
-      const annotations = xmlbuilder.create('annotations')
-      const spans = annotations.ele('spans')
-      const relations = annotations.ele('relations')
-      // console.log(graph.getChildVertices(parent))
-
-      graph.getChildVertices(parent).forEach(v => {
-        let value = v.value
-        let label = '', text = ''
-        if (value.length > 0) {
-          let vv = value.split('\n')
-          if (vv[0]) {
-            label = vv[0]
-          }
-          if (vv[1]) {
-            text = vv[1]
-          }
-        }
-
-        spans.importDocument(xmlbuilder.create('item').att({id: v.id, label, text}))
-      })
-
-      console.log(graph.getChildEdges(parent))
-      graph.getChildEdges(parent).forEach(edge => {
-        relations.importDocument(xmlbuilder.create('item').att({head: edge.source.id, tail: edge.target.id, label: edge.value ? edge.value : 'undefined'}))
-      })
-
-      // consoleにxmlを出力(debug)
-      // 独自フォーマット
-      const xml = annotations.end({ pretty: true })
-      console.log(xml)
-
-      const enc = new mxCodec(mxUtils.createXmlDocument())
-      const node = enc.encode(graph.getModel())
-      // xml2 = mxUtils.getXml(node)
-      xml2 = mxUtils.getPrettyXml(node)
-
-      // consoleにxml2を出力(debug)
-      // 内部フォーマット 後ほどインポート可能
-      console.log(xml2)
-
-      // ファイルにダウンロードする
-      const a = $('<a>').attr({
-        // href: URL.createObjectURL(new Blob([xml])),
-        href: URL.createObjectURL(new Blob(['<?xml version="1.0"?>\n' + xml2])),
-        download: 'annotations.xml'
-      }).appendTo($('body'))
-      a[0].click()
-      a.remove()
-    })
-
-    // xmlインポートのハンドラー
-    $('#import-xml :file').change(event => {
-      // graph.getModel().clear()
-      const files = Array.from(event.target.files)
-      if (files.length >= 1) {
-        new Promise((resolve, reject) => {
-          const reader = new FileReader()
-          reader.onload = event => {
-            resolve(event.target.result)
-          }
-          reader.readAsText(files[0] )
-        }).then(result => {
-          return new Blob([result])
-        }).then(blob => {
-          return window.URL.createObjectURL(blob)
-        }).then(url => {
-          return mxUtils.load(url).getXml()
-        }).then(xmlDoc => {
-          const node = xmlDoc.documentElement
-          const dec = new mxCodec(node.ownerDocument)
-          dec.decode(node, graph.getModel())
-          parent = graph.getDefaultParent()
-        })
-      } else {
-        alert('xmlファイルを選択してください。')
-      }
-    })
-
-        // [new mxRectangle(0, 0, VERTEX_WIDTH, VERTEX_HEIGHT), '#e5c095', '#000000', 1]
-
-
-
+    return
   }
+
+  // Note that we're using the container scrollbars for the graph so that the
+  // container extends to the parent div inside the window
+  var wnd = new mxWindow('mxGraph sample program', container, WINDOW_X, WINDOW_Y, WINDOW_WIDTH, WINDOW_HEIGHT, true, true)
+
+  wnd.setMaximizable(true)
+  wnd.setResizable(true)
+  wnd.setVisible(true)
+
+  // Creates the graph inside the given container
+  var graph = new mxGraph(container)
+
+  graph.setTooltips(true)
+  graph.setPanning(true)
+  graph.setConnectable(true)
+  graph.setAutoSizeCells(true)
+
+  // graph.autoSizeCellsOnAdd = true
+
+  // セルのラベルの編集を禁止する
+  graph.setCellsEditable(false)
+
+  var layout = new mxParallelEdgeLayout(graph)
+  var layoutMgr = new mxLayoutManager(graph)
+
+  layoutMgr.getLayout = cell => {
+    if (cell.getChildCount() > 0) {
+      return layout
+    }
+  }
+
+  var rubberband = new mxRubberband(graph)
+  new mxKeyHandler(graph)
+
+  const style = graph.getStylesheet().getDefaultEdgeStyle()
+  style[mxConstants.STYLE_ROUNDED] = true
+
+  // カラースタイルを登録する
+  registerColors(graph)
+
+  // シェイプを登録する
+  registerShapes(graph)
+
+  // エッジ・スタイルは要検討
+  // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.ElbowConnector
+  // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.SideToSide
+  // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.TopToBottom
+  // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.EntityRelation
+  // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.Loop
+  // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.SegmentConnector
+  style[mxConstants.STYLE_EDGE] = mxEdgeStyle.OrthConnector
+
+  graph.alternateEdgeStyle = 'elbow=vertical'
+
+  mxEvent.disableContextMenu(container)
+
+  // Gets the default parent for inserting new cells. This
+  // is normally the first child of the root (ie. layer 0).
+  var parent = graph.getDefaultParent()
+
+  // mxLog.show()
+
+  // スパン追加のハンドラー
+  $('#add-span').click(() => {
+    graph.getModel().beginUpdate()
+    try {
+      const label = $('#span-label').val() + '\n' + $('#span-text').val()
+      const color = Object.keys(colorStyles)[randomInt(COLOR_STYLE_MAX)]
+      let shape = $('select#shape').val()
+      if (shape === '0') {
+        // シェイプを選択していない場合は、rectangle にする。
+        shape = 'rectangle'
+      }
+
+      const doc = mxUtils.createXmlDocument()
+      const node = doc.createElement('pdfanno')
+      node.setAttribute('label', $('#span-label').val())
+      node.setAttribute('text', $('#span-text').val())
+      node.setAttribute('id', randomInt(100))
+    
+
+      graph.insertVertex(parent, null, node, 0, 0, VERTEX_WIDTH, VERTEX_HEIGHT, color + ';' + shape)
+      // const vertex = graph.insertVertex(parent, null, label, 0, 0, VERTEX_WIDTH, VERTEX_HEIGHT, color + ';' + shape)
+    } finally {
+      graph.getModel().endUpdate()
+    }
+  })
+
+  graph.addListener(mxEvent.CELL_CONNECTED, (g, event) => {
+    console.log('CELL_CONNECTED')
+    const source = event.getProperty('source') ? 'source' : 'target'
+    console.log(`  edge id=${event.getProperty('edge').id} geometry=${JSON.stringify(event.getProperty('edge').getGeometry())}`)
+    console.log(`  vertex id=${event.getProperty('terminal').id} ${source}, geometry=${JSON.stringify(event.getProperty('terminal').getGeometry())}`)
+  })
+
+  graph.addListener(mxEvent.CELLS_ADDED, (g, event) => {
+    console.log('CELLS_ADDED')
+    event.getProperty('cells').forEach(cell => {
+      let type = 'unknown'
+      if (cell.isVertex()) {
+        type = 'vertex'
+      } else if (cell.isEdge()) {
+        type = 'edge'
+      }
+      console.log(`  ${type} id=${cell.id} geometry=${JSON.stringify(cell.getGeometry())}`)
+    })
+  })
+
+  // in-place editing
+  // ラベルの位置は要調整
+  graph.dblClick = (event, cell) => {
+    if (cell && graph.getModel().isEdge(cell)) {
+      graph.startEditingAtCell(cell)
+    }
+  }
+
+  // シェイプを select に表示
+  const shape = $('select#shape')
+  shapeList.forEach(key => {
+    $('<option>').attr('value', key).text(key).appendTo(shape)
+  })
+
+  // xmlエクスポートのハンドラー
+  $('#export-xml').click(() => {
+    const annotations = xmlbuilder.create('annotations')
+    const spans = annotations.ele('spans')
+    const relations = annotations.ele('relations')
+    // console.log(graph.getChildVertices(parent))
+
+    graph.getChildVertices(parent).forEach(v => {
+      let value = v.value
+      let label = '', text = ''
+      if (value.length > 0) {
+        let vv = value.split('\n')
+        if (vv[0]) {
+          label = vv[0]
+        }
+        if (vv[1]) {
+          text = vv[1]
+        }
+      }
+
+      spans.importDocument(xmlbuilder.create('item').att({ id: v.id, label, text }))
+    })
+
+    console.log(graph.getChildEdges(parent))
+    graph.getChildEdges(parent).forEach(edge => {
+      relations.importDocument(xmlbuilder.create('item').att({ head: edge.source.id, tail: edge.target.id, label: edge.value ? edge.value : 'undefined' }))
+    })
+
+    // consoleにxmlを出力(debug)
+    // 独自フォーマット
+    const xml = annotations.end({ pretty: true })
+    console.log(xml)
+
+    const enc = new mxCodec(mxUtils.createXmlDocument())
+    const node = enc.encode(graph.getModel())
+    // xml2 = mxUtils.getXml(node)
+    xml2 = mxUtils.getPrettyXml(node)
+
+    // consoleにxml2を出力(debug)
+    // 内部フォーマット 後ほどインポート可能
+    console.log(xml2)
+
+    // ファイルにダウンロードする
+    const a = $('<a>').attr({
+      // href: URL.createObjectURL(new Blob([xml])),
+      href: URL.createObjectURL(new Blob(['<?xml version="1.0"?>\n' + xml2])),
+      download: 'annotations.xml'
+    }).appendTo($('body'))
+    a[0].click()
+    a.remove()
+  })
+
+  // xmlインポートのハンドラー
+  $('#import-xml :file').change(event => {
+    // graph.getModel().clear()
+    const files = Array.from(event.target.files)
+    if (files.length >= 1) {
+      new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = event => {
+          resolve(event.target.result)
+        }
+        reader.readAsText(files[0])
+      }).then(result => {
+        return new Blob([result])
+      }).then(blob => {
+        return window.URL.createObjectURL(blob)
+      }).then(url => {
+        return mxUtils.load(url).getXml()
+      }).then(xmlDoc => {
+        const node = xmlDoc.documentElement
+        const dec = new mxCodec(node.ownerDocument)
+        dec.decode(node, graph.getModel())
+        parent = graph.getDefaultParent()
+      })
+    } else {
+      alert('xmlファイルを選択してください。')
+    }
+  })
+
+
 }
 
 $(window).on('load', () => {
