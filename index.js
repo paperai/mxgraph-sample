@@ -117,6 +117,21 @@ function main (container) {
   // セルのラベルの編集を禁止する
   graph.setCellsEditable(false)
 
+  // セルのラベルを描画する
+  // セルのattributeを設定しているため
+  graph.convertValueToString = cell => {
+    if (mxUtils.isNode(cell.value)) {
+      if (cell.isVertex()) {
+        return cell.getAttribute('label', '') + '\n' + cell.getAttribute('text', '')
+      } else {
+        console.log(cell.getValue())
+        return cell.getValue()
+      }
+    } else {
+      return cell.getValue()
+    }
+  }
+  
   var layout = new mxParallelEdgeLayout(graph)
   var layoutMgr = new mxLayoutManager(graph)
 
@@ -161,9 +176,9 @@ function main (container) {
   $('#add-span').click(() => {
     graph.getModel().beginUpdate()
     try {
-      const label = $('#span-label').val() + '\n' + $('#span-text').val()
       const color = Object.keys(colorStyles)[randomInt(COLOR_STYLE_MAX)]
       let shape = $('select#shape').val()
+
       if (shape === '0') {
         // シェイプを選択していない場合は、rectangle にする。
         shape = 'rectangle'
@@ -171,13 +186,11 @@ function main (container) {
 
       const doc = mxUtils.createXmlDocument()
       const node = doc.createElement('pdfanno')
-      node.setAttribute('label', $('#span-label').val())
-      node.setAttribute('text', $('#span-text').val())
+      node.setAttribute('label', $('input#span-label').val())
+      node.setAttribute('text', $('input#span-text').val())
       node.setAttribute('id', randomInt(100))
-    
-
+      node.setAttribute('textrange', [randomInt(100), randomInt(100)])
       graph.insertVertex(parent, null, node, 0, 0, VERTEX_WIDTH, VERTEX_HEIGHT, color + ';' + shape)
-      // const vertex = graph.insertVertex(parent, null, label, 0, 0, VERTEX_WIDTH, VERTEX_HEIGHT, color + ';' + shape)
     } finally {
       graph.getModel().endUpdate()
     }
@@ -297,6 +310,10 @@ function main (container) {
     }
   })
 
+  // mxLog.show()
+  // for (var i in mxCellRenderer.defaultShapes) {
+  //   mxLog.debug(i)
+  // }
 
 }
 
