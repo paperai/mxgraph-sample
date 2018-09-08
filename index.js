@@ -172,9 +172,18 @@ function main (container) {
 
   // mxLog.show()
 
+  // シェイプを select に表示
+  const shape = $('select#shape')
+  shapeList.forEach(key => {
+    $('<option>').attr('value', key).text(key).appendTo(shape)
+  })
+
+  let count = 10
+
   // スパン追加のハンドラー
   $('#add-span').click(() => {
     graph.getModel().beginUpdate()
+
     try {
       const color = Object.keys(colorStyles)[randomInt(COLOR_STYLE_MAX)]
       let shape = $('select#shape').val()
@@ -188,9 +197,10 @@ function main (container) {
       const node = doc.createElement('pdfanno')
       node.setAttribute('label', $('input#span-label').val())
       node.setAttribute('text', $('input#span-text').val())
-      node.setAttribute('id', randomInt(100))
+      node.setAttribute('pdfannoId', randomInt(100))
       node.setAttribute('textrange', [randomInt(100), randomInt(100)])
-      graph.insertVertex(parent, null, node, 0, 0, VERTEX_WIDTH, VERTEX_HEIGHT, color + ';' + shape)
+      // graph.insertVertex(parent, null, node, 0, 0, VERTEX_WIDTH, VERTEX_HEIGHT, color + ';' + shape)
+      graph.insertVertex(parent, count++, node, 0, 0, VERTEX_WIDTH, VERTEX_HEIGHT, color + ';' + shape)
     } finally {
       graph.getModel().endUpdate()
     }
@@ -224,32 +234,18 @@ function main (container) {
     }
   }
 
-  // シェイプを select に表示
-  const shape = $('select#shape')
-  shapeList.forEach(key => {
-    $('<option>').attr('value', key).text(key).appendTo(shape)
-  })
-
   // xmlエクスポートのハンドラー
   $('#export-xml').click(() => {
+    /*
     const annotations = xmlbuilder.create('annotations')
     const spans = annotations.ele('spans')
     const relations = annotations.ele('relations')
-    // console.log(graph.getChildVertices(parent))
 
     graph.getChildVertices(parent).forEach(v => {
       let value = v.value
-      let label = '', text = ''
-      if (value.length > 0) {
-        let vv = value.split('\n')
-        if (vv[0]) {
-          label = vv[0]
-        }
-        if (vv[1]) {
-          text = vv[1]
-        }
-      }
-
+      // valueがnodeになるので変更が必要
+      console.log(v.value)
+      const [label = '', text = ''] = v.value ? v.value.split('\n') : ''
       spans.importDocument(xmlbuilder.create('item').att({ id: v.id, label, text }))
     })
 
@@ -262,6 +258,7 @@ function main (container) {
     // 独自フォーマット
     const xml = annotations.end({ pretty: true })
     console.log(xml)
+    */
 
     const enc = new mxCodec(mxUtils.createXmlDocument())
     const node = enc.encode(graph.getModel())
@@ -284,9 +281,9 @@ function main (container) {
 
   // xmlインポートのハンドラー
   $('#import-xml :file').change(event => {
-    // graph.getModel().clear()
     const files = Array.from(event.target.files)
     if (files.length >= 1) {
+      graph.model.beginUpdate()
       new Promise((resolve, reject) => {
         const reader = new FileReader()
         reader.onload = event => {
@@ -300,10 +297,15 @@ function main (container) {
       }).then(url => {
         return mxUtils.load(url).getXml()
       }).then(xmlDoc => {
+        graph.model.clear()
         const node = xmlDoc.documentElement
         const dec = new mxCodec(node.ownerDocument)
         dec.decode(node, graph.getModel())
         parent = graph.getDefaultParent()
+      }).catch(e => {
+        console.error(e)
+      }).finally(() => {
+        graph.model.endUpdate()
       })
     } else {
       alert('xmlファイルを選択してください。')

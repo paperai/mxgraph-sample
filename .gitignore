@@ -5,4 +5,4 @@ npm-debug.log
 .env
 #dist/
 .vscode/
-saved-data/
+save/
