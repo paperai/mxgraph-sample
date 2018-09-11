@@ -206,6 +206,9 @@ function main (container) {
   graph.setPanning(true)
   graph.setConnectable(true)
   graph.setAutoSizeCells(true)
+  graph.setDisconnectOnMove(true)
+  graph.setAllowDanglingEdges(true)
+
 
   // graph.autoSizeCellsOnAdd = true
 
@@ -227,8 +230,8 @@ function main (container) {
     }
   }
   
-  var layout = new mxParallelEdgeLayout(graph)
-  var layoutMgr = new mxLayoutManager(graph)
+  const layout = new mxParallelEdgeLayout(graph)
+  const layoutMgr = new mxLayoutManager(graph)
 
   layoutMgr.getLayout = cell => {
     if (cell.getChildCount() > 0) {
@@ -236,7 +239,7 @@ function main (container) {
     }
   }
 
-  var rubberband = new mxRubberband(graph)
+  let rubberband = new mxRubberband(graph)
   new mxKeyHandler(graph)
 
   const style = graph.getStylesheet().getDefaultEdgeStyle()
@@ -263,7 +266,7 @@ function main (container) {
 
   // Gets the default parent for inserting new cells. This
   // is normally the first child of the root (ie. layer 0).
-  var parent = graph.getDefaultParent()
+  let parent = graph.getDefaultParent()
 
   // mxLog.show()
 
@@ -272,8 +275,6 @@ function main (container) {
   shapeList.forEach(key => {
     $('<option>').attr('value', key).text(key).appendTo(shape)
   })
-
-  let count = 10
 
   // スパン追加のハンドラー
   $('#add-span').click(() => {
@@ -294,8 +295,7 @@ function main (container) {
       node.setAttribute('text', $('input#span-text').val())
       node.setAttribute('pdfannoId', randomInt(100))
       node.setAttribute('textrange', [randomInt(100), randomInt(100)])
-      // graph.insertVertex(parent, null, node, 0, 0, VERTEX_WIDTH, VERTEX_HEIGHT, color + ';' + shape)
-      graph.insertVertex(parent, count++, node, 0, 0, VERTEX_WIDTH, VERTEX_HEIGHT, color + ';' + shape)
+      graph.insertVertex(parent, null, node, 0, 0, VERTEX_WIDTH, VERTEX_HEIGHT, color + ';' + shape)
     } finally {
       graph.getModel().endUpdate()
     }
@@ -366,12 +366,18 @@ function main (container) {
 
     // ファイルにダウンロードする
     const a = $('<a>').attr({
-      // href: URL.createObjectURL(new Blob([xml])),
-      href: URL.createObjectURL(new Blob(['<?xml version="1.0"?>\n' + xml2])),
+      href: URL.createObjectURL(new Blob(['<?xml version="1.0"?>\n' + xml2], {type: 'application/xml'})),
       download: 'annotations.xml'
     }).appendTo($('body'))
-    a[0].click()
-    a.remove()
+
+    try {
+      window.setTimeout(() => {
+        URL.revokeObjectURL(a[0].href)
+      }, 0)
+      a[0].click()
+      a.remove()
+    } catch (e) {
+    }
   })
 
   // xmlインポートのハンドラー
@@ -405,6 +411,15 @@ function main (container) {
     } else {
       alert('xmlファイルを選択してください。')
     }
+  })
+
+  $('input#flag-edges').change(event => {
+    const $label = $(event.target).parent()
+    const enable = $label.hasClass('active')
+    $label.find('span').text(enable ? 'Cannot create edges' : 'Can create edges')
+    graph.setConnectable(!enable)
+    graph.setDisconnectOnMove(!enable)
+    graph.setAllowDanglingEdges(!enable)
   })
 
   // mxLog.show()
