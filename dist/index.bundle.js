@@ -106,30 +106,50 @@ const VERTEX_WIDTH = 80
 const VERTEX_HEIGHT = 30
 
 // 定義しているカラースタイル数
-const COLOR_STYLE_MAX = 4
+const COLOR_STYLE_MAX = 8
 
 // カラースタイル
 // 定義しているカラースタイルをランダムにスパンに割り当てる。
 const colorStyles = {
   color1: {
-    [mxConstants.STYLE_STROKECOLOR]: 'black',
+    [mxConstants.STYLE_STROKECOLOR]: '#FFEB3B',
     [mxConstants.STYLE_FONTCOLOR]: 'black',
-    [mxConstants.STYLE_FILLCOLOR]: '#e5c095'
+    [mxConstants.STYLE_FILLCOLOR]: '#FFEB3B66'
   },
   color2: {
-    [mxConstants.STYLE_STROKECOLOR]: 'black',
+    [mxConstants.STYLE_STROKECOLOR]: 'FF5722',
     [mxConstants.STYLE_FONTCOLOR]: 'black',
-    [mxConstants.STYLE_FILLCOLOR]: '#d37a9b'
+    [mxConstants.STYLE_FILLCOLOR]: '#FF572266'
   },
   color3: {
-    [mxConstants.STYLE_STROKECOLOR]: 'black',
+    [mxConstants.STYLE_STROKECOLOR]: '795548',
     [mxConstants.STYLE_FONTCOLOR]: 'black',
-    [mxConstants.STYLE_FILLCOLOR]: '#b3efbb'
+    [mxConstants.STYLE_FILLCOLOR]: '#79554866'
   },
   color4: {
-    [mxConstants.STYLE_STROKECOLOR]: 'black',
+    [mxConstants.STYLE_STROKECOLOR]: 'F44336',
     [mxConstants.STYLE_FONTCOLOR]: 'black',
-    [mxConstants.STYLE_FILLCOLOR]: '#8edee2'
+    [mxConstants.STYLE_FILLCOLOR]: '#F4433666'
+  },
+  color5: {
+    [mxConstants.STYLE_STROKECOLOR]: 'E91E63',
+    [mxConstants.STYLE_FONTCOLOR]: 'black',
+    [mxConstants.STYLE_FILLCOLOR]: '#E91E6366'
+  },
+  color6: {
+    [mxConstants.STYLE_STROKECOLOR]: '9C27B0',
+    [mxConstants.STYLE_FONTCOLOR]: 'black',
+    [mxConstants.STYLE_FILLCOLOR]: '#9C27B066'
+  },
+  color7: {
+    [mxConstants.STYLE_STROKECOLOR]: '3F51B5',
+    [mxConstants.STYLE_FONTCOLOR]: 'black',
+    [mxConstants.STYLE_FILLCOLOR]: '#3F51B566'
+  },
+  color8: {
+    [mxConstants.STYLE_STROKECOLOR]: '4CAF50',
+    [mxConstants.STYLE_FONTCOLOR]: 'black',
+    [mxConstants.STYLE_FILLCOLOR]: '#4CAF5066'
   }
 }
 
@@ -277,28 +297,8 @@ function main (container) {
   })
 
   // スパン追加のハンドラー
-  $('#add-span').click(() => {
-    graph.getModel().beginUpdate()
-
-    try {
-      const color = Object.keys(colorStyles)[randomInt(COLOR_STYLE_MAX)]
-      let shape = $('select#shape').val()
-
-      if (shape === '0') {
-        // シェイプを選択していない場合は、rectangle にする。
-        shape = 'rectangle'
-      }
-
-      const doc = mxUtils.createXmlDocument()
-      const node = doc.createElement('pdfanno')
-      node.setAttribute('label', $('input#span-label').val())
-      node.setAttribute('text', $('input#span-text').val())
-      node.setAttribute('pdfannoId', randomInt(100))
-      node.setAttribute('textrange', [randomInt(100), randomInt(100)])
-      graph.insertVertex(parent, null, node, 0, 0, VERTEX_WIDTH, VERTEX_HEIGHT, color + ';' + shape)
-    } finally {
-      graph.getModel().endUpdate()
-    }
+  $('#add-span').click(event => {
+    addSpan(event)
   })
 
   graph.addListener(mxEvent.CELL_CONNECTED, (g, event) => {
@@ -330,87 +330,13 @@ function main (container) {
   }
 
   // xmlエクスポートのハンドラー
-  $('#export-xml').click(() => {
-    /*
-    const annotations = xmlbuilder.create('annotations')
-    const spans = annotations.ele('spans')
-    const relations = annotations.ele('relations')
-
-    graph.getChildVertices(parent).forEach(v => {
-      let value = v.value
-      // valueがnodeになるので変更が必要
-      console.log(v.value)
-      const [label = '', text = ''] = v.value ? v.value.split('\n') : ''
-      spans.importDocument(xmlbuilder.create('item').att({ id: v.id, label, text }))
-    })
-
-    console.log(graph.getChildEdges(parent))
-    graph.getChildEdges(parent).forEach(edge => {
-      relations.importDocument(xmlbuilder.create('item').att({ head: edge.source.id, tail: edge.target.id, label: edge.value ? edge.value : 'undefined' }))
-    })
-
-    // consoleにxmlを出力(debug)
-    // 独自フォーマット
-    const xml = annotations.end({ pretty: true })
-    console.log(xml)
-    */
-
-    const enc = new mxCodec(mxUtils.createXmlDocument())
-    const node = enc.encode(graph.getModel())
-    // xml2 = mxUtils.getXml(node)
-    xml2 = mxUtils.getPrettyXml(node)
-
-    // consoleにxml2を出力(debug)
-    // 内部フォーマット 後ほどインポート可能
-    console.log(xml2)
-
-    // ファイルにダウンロードする
-    const a = $('<a>').attr({
-      href: URL.createObjectURL(new Blob(['<?xml version="1.0"?>\n' + xml2], {type: 'application/xml'})),
-      download: 'annotations.xml'
-    }).appendTo($('body'))
-
-    try {
-      window.setTimeout(() => {
-        URL.revokeObjectURL(a[0].href)
-      }, 0)
-      a[0].click()
-      a.remove()
-    } catch (e) {
-    }
+  $('#export-xml').click(event => {
+    exportXml(event)
   })
 
   // xmlインポートのハンドラー
   $('#import-xml :file').change(event => {
-    const files = Array.from(event.target.files)
-    if (files.length >= 1) {
-      graph.model.beginUpdate()
-      new Promise((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onload = event => {
-          resolve(event.target.result)
-        }
-        reader.readAsText(files[0])
-      }).then(result => {
-        return new Blob([result])
-      }).then(blob => {
-        return window.URL.createObjectURL(blob)
-      }).then(url => {
-        return mxUtils.load(url).getXml()
-      }).then(xmlDoc => {
-        graph.model.clear()
-        const node = xmlDoc.documentElement
-        const dec = new mxCodec(node.ownerDocument)
-        dec.decode(node, graph.getModel())
-        parent = graph.getDefaultParent()
-      }).catch(e => {
-        console.error(e)
-      }).finally(() => {
-        graph.model.endUpdate()
-      })
-    } else {
-      alert('xmlファイルを選択してください。')
-    }
+    importXml(event)
   })
 
   $('input#flag-edges').change(event => {
@@ -428,6 +354,128 @@ function main (container) {
   // }
 
 }
+
+/**
+ * 
+ * @param {*} event 
+ */
+function addSpan(event) {
+  graph.getModel().beginUpdate()
+
+  try {
+    const color = Object.keys(colorStyles)[randomInt(COLOR_STYLE_MAX)]
+    let shape = $('select#shape').val()
+
+    if (shape === '0') {
+      // シェイプを選択していない場合は、rectangle にする。
+      shape = 'rectangle'
+    }
+
+    const doc = mxUtils.createXmlDocument()
+    const node = doc.createElement('pdfanno')
+    node.setAttribute('label', $('input#span-label').val())
+    node.setAttribute('text', $('input#span-text').val())
+    node.setAttribute('pdfannoId', randomInt(100))
+    node.setAttribute('textrange', [randomInt(100), randomInt(100)])
+    graph.insertVertex(parent, null, node, 0, 0, VERTEX_WIDTH, VERTEX_HEIGHT, color + ';' + shape)
+  } finally {
+    graph.getModel().endUpdate()
+  }
+}
+
+/**
+ * 
+ * @param {*} event 
+ */
+function exportXml(event) {
+  /*
+  const annotations = xmlbuilder.create('annotations')
+  const spans = annotations.ele('spans')
+  const relations = annotations.ele('relations')
+
+  graph.getChildVertices(parent).forEach(v => {
+    let value = v.value
+    // valueがnodeになるので変更が必要
+    console.log(v.value)
+    const [label = '', text = ''] = v.value ? v.value.split('\n') : ''
+    spans.importDocument(xmlbuilder.create('item').att({ id: v.id, label, text }))
+  })
+
+  console.log(graph.getChildEdges(parent))
+  graph.getChildEdges(parent).forEach(edge => {
+    relations.importDocument(xmlbuilder.create('item').att({ head: edge.source.id, tail: edge.target.id, label: edge.value ? edge.value : 'undefined' }))
+  })
+
+  // consoleにxmlを出力(debug)
+  // 独自フォーマット
+  const xml = annotations.end({ pretty: true })
+  console.log(xml)
+  */
+
+  const enc = new mxCodec(mxUtils.createXmlDocument())
+  const node = enc.encode(graph.getModel())
+  // xml2 = mxUtils.getXml(node)
+  xml2 = mxUtils.getPrettyXml(node)
+
+  // consoleにxml2を出力(debug)
+  // 内部フォーマット 後ほどインポート可能
+  console.log(xml2)
+
+  // ファイルにダウンロードする
+  const a = $('<a>').attr({
+    href: URL.createObjectURL(new Blob(['<?xml version="1.0"?>\n' + xml2], {type: 'application/xml'})),
+    download: 'annotations.xml'
+  }).appendTo($('body'))
+
+  try {
+    window.setTimeout(() => {
+      URL.revokeObjectURL(a[0].href)
+    }, 0)
+
+    a[0].click()
+    a.remove()
+  } catch (e) {
+  }
+}
+
+/**
+ * 
+ * @param {*} event 
+ */
+function importXml(event) {
+  const files = Array.from(event.target.files)
+  if (files.length >= 1) {
+    graph.model.beginUpdate()
+    new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = event => {
+        resolve(event.target.result)
+      }
+      reader.readAsText(files[0])
+    }).then(result => {
+      return new Blob([result])
+    }).then(blob => {
+      return window.URL.createObjectURL(blob)
+    }).then(url => {
+      return mxUtils.load(url).getXml()
+    }).then(xmlDoc => {
+      graph.model.clear()
+      const node = xmlDoc.documentElement
+      const dec = new mxCodec(node.ownerDocument)
+      dec.decode(node, graph.getModel())
+      parent = graph.getDefaultParent()
+    }).catch(e => {
+      console.error(e)
+    }).finally(() => {
+      graph.model.endUpdate()
+    })
+  } else {
+    alert('xmlファイルを選択してください。')
+  }
+}
+
+
+
 
 $(window).on('load', () => {
   main(document.getElementById('graphContainer'))
