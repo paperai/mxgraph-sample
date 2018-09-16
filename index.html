@@ -64,15 +64,21 @@ $ npm run watch
         import xml<input type="file" style="display: none;" accept=".xml">
       </label>
 
+      <label id="import-pdfanno" class="btn btn-primary btn-sm mr-sm-2">
+        import pdfanno<input type="file" style="display: none;" accept=".pdfanno">
+      </label>
+
       <div class="btn-group-sm btn-group-toggle" data-toggle="buttons">
-        <label class="btn btn-secondary active">
-          <input type="checkbox" id="flag-edges" autocomplete="off"><span>Can create edge</span>
+        <label class="btn btn-secondary mr-sm-2">
+          <input type="checkbox" id="flag-edges" autocomplete="off"><span>Cannot create edge</span>
         </label>
       </div>
+
+      <button id='action' class="btn btn-danger btn-sm mr-sm-2">action</button>
     </div>
   
     <!-- Creates a container for the graph with a grid wallpaper -->
-    <div id="graphContainer" style="overflow:auto;position:absolute;width:100%;height:100%;background:lightyellow;cursor:default;">
+    <div id="graphContainer" style="overflow:auto;position:absolute;width:100%;height:100%;background:white;cursor:default;">
     </div>
   </div>
 </body>

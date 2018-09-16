@@ -1,4 +1,5 @@
-var xmlbuilder = require('xmlbuilder')
+const xmlbuilder = require('xmlbuilder')
+const toml = require('toml')
 
 // windowの左上コーナーの位置と幅、高さ
 const WINDOW_X = 50
@@ -11,50 +12,87 @@ const VERTEX_WIDTH = 80
 const VERTEX_HEIGHT = 30
 
 // 定義しているカラースタイル数
-const COLOR_STYLE_MAX = 8
+const VERTEX_COLOR_STYLE_MAX = 8
+const EDGE_COLOR_STYLE_MAX = 8
 
 // カラースタイル
 // 定義しているカラースタイルをランダムにスパンに割り当てる。
 const colorStyles = {
-  color1: {
-    [mxConstants.STYLE_STROKECOLOR]: '#FFEB3B',
-    [mxConstants.STYLE_FONTCOLOR]: 'black',
-    [mxConstants.STYLE_FILLCOLOR]: '#FFEB3B66'
+  vertex: {
+    vcolor1: {
+      [mxConstants.STYLE_STROKECOLOR]: '#FFEB3B',
+      [mxConstants.STYLE_FONTCOLOR]: 'black',
+      [mxConstants.STYLE_FILLCOLOR]: '#FFEB3B66'
+    },
+    vcolor2: {
+      [mxConstants.STYLE_STROKECOLOR]: '#FF5722',
+      [mxConstants.STYLE_FONTCOLOR]: 'black',
+      [mxConstants.STYLE_FILLCOLOR]: '#FF572266'
+    },
+    vcolor3: {
+      [mxConstants.STYLE_STROKECOLOR]: '#795548',
+      [mxConstants.STYLE_FONTCOLOR]: 'black',
+      [mxConstants.STYLE_FILLCOLOR]: '#79554866'
+    },
+    vcolor4: {
+      [mxConstants.STYLE_STROKECOLOR]: '#F44336',
+      [mxConstants.STYLE_FONTCOLOR]: 'black',
+      [mxConstants.STYLE_FILLCOLOR]: '#F4433666'
+    },
+    vcolor5: {
+      [mxConstants.STYLE_STROKECOLOR]: '#E91E63',
+      [mxConstants.STYLE_FONTCOLOR]: 'black',
+      [mxConstants.STYLE_FILLCOLOR]: '#E91E6366'
+    },
+    vcolor6: {
+      [mxConstants.STYLE_STROKECOLOR]: '#9C27B0',
+      [mxConstants.STYLE_FONTCOLOR]: 'black',
+      [mxConstants.STYLE_FILLCOLOR]: '#9C27B066'
+    },
+    vcolor7: {
+      [mxConstants.STYLE_STROKECOLOR]: '#3F51B5',
+      [mxConstants.STYLE_FONTCOLOR]: 'black',
+      [mxConstants.STYLE_FILLCOLOR]: '#3F51B566'
+    },
+    vcolor8: {
+      [mxConstants.STYLE_STROKECOLOR]: '#4CAF50',
+      [mxConstants.STYLE_FONTCOLOR]: 'black',
+      [mxConstants.STYLE_FILLCOLOR]: '#4CAF5066'
+    }
   },
-  color2: {
-    [mxConstants.STYLE_STROKECOLOR]: 'FF5722',
-    [mxConstants.STYLE_FONTCOLOR]: 'black',
-    [mxConstants.STYLE_FILLCOLOR]: '#FF572266'
-  },
-  color3: {
-    [mxConstants.STYLE_STROKECOLOR]: '795548',
-    [mxConstants.STYLE_FONTCOLOR]: 'black',
-    [mxConstants.STYLE_FILLCOLOR]: '#79554866'
-  },
-  color4: {
-    [mxConstants.STYLE_STROKECOLOR]: 'F44336',
-    [mxConstants.STYLE_FONTCOLOR]: 'black',
-    [mxConstants.STYLE_FILLCOLOR]: '#F4433666'
-  },
-  color5: {
-    [mxConstants.STYLE_STROKECOLOR]: 'E91E63',
-    [mxConstants.STYLE_FONTCOLOR]: 'black',
-    [mxConstants.STYLE_FILLCOLOR]: '#E91E6366'
-  },
-  color6: {
-    [mxConstants.STYLE_STROKECOLOR]: '9C27B0',
-    [mxConstants.STYLE_FONTCOLOR]: 'black',
-    [mxConstants.STYLE_FILLCOLOR]: '#9C27B066'
-  },
-  color7: {
-    [mxConstants.STYLE_STROKECOLOR]: '3F51B5',
-    [mxConstants.STYLE_FONTCOLOR]: 'black',
-    [mxConstants.STYLE_FILLCOLOR]: '#3F51B566'
-  },
-  color8: {
-    [mxConstants.STYLE_STROKECOLOR]: '4CAF50',
-    [mxConstants.STYLE_FONTCOLOR]: 'black',
-    [mxConstants.STYLE_FILLCOLOR]: '#4CAF5066'
+  edge: {
+    ecolor1: {
+      [mxConstants.STYLE_STROKECOLOR]: '#FFEB3B',
+      [mxConstants.STYLE_FONTCOLOR]: 'black'
+    },
+    ecolor2: {
+      [mxConstants.STYLE_STROKECOLOR]: '#FF5722',
+      [mxConstants.STYLE_FONTCOLOR]: 'black'
+    },
+    ecolor3: {
+      [mxConstants.STYLE_STROKECOLOR]: '#795548',
+      [mxConstants.STYLE_FONTCOLOR]: 'black'
+    },
+    ecolor4: {
+      [mxConstants.STYLE_STROKECOLOR]: '#F44336',
+      [mxConstants.STYLE_FONTCOLOR]: 'black'
+    },
+    ecolor5: {
+      [mxConstants.STYLE_STROKECOLOR]: '#E91E63',
+      [mxConstants.STYLE_FONTCOLOR]: 'black'
+    },
+    ecolor6: {
+      [mxConstants.STYLE_STROKECOLOR]: '#9C27B0',
+      [mxConstants.STYLE_FONTCOLOR]: 'black'
+    },
+    ecolor7: {
+      [mxConstants.STYLE_STROKECOLOR]: '#3F51B5',
+      [mxConstants.STYLE_FONTCOLOR]: 'black'
+    },
+    ecolor8: {
+      [mxConstants.STYLE_STROKECOLOR]: '#4CAF50',
+      [mxConstants.STYLE_FONTCOLOR]: 'black'
+    }
   }
 }
 
@@ -85,8 +123,10 @@ function randomInt (max) {
  * @param {mxGraph} graph 
  */
 function registerColors (graph) {
-  Object.keys(colorStyles).forEach(key => {
-    graph.getStylesheet().putCellStyle(key, colorStyles[key])
+  ;['vertex', 'edge'].forEach(cell => {
+    Object.keys(colorStyles[cell]).forEach(key => {
+      graph.getStylesheet().putCellStyle(key, colorStyles[cell][key])
+    })
   })
 }
 
@@ -134,8 +174,10 @@ function main (container) {
   graph.setDisconnectOnMove(true)
   graph.setAllowDanglingEdges(true)
 
-
   // graph.autoSizeCellsOnAdd = true
+
+  // エッジの編集可否の初期設定
+  edgeEnable(false)
 
   // セルのラベルの編集を禁止する
   graph.setCellsEditable(false)
@@ -155,14 +197,65 @@ function main (container) {
     }
   }
   
-  const layout = new mxParallelEdgeLayout(graph)
+  ////////////////////////////////////////////////////////////////////////////////
+  // レイアウト・スタイルは要検討
+
+  // const layout = new mxCircleLayout(graph, 10)
+
+  /*
+  // 単独のvertexは無視される
+  const layout = new mxCompactTreeLayout(graph, false)
+  layout.useBoundingBox = false
+  layout.edgeRouting = false
+  layout.levelDistance = 30
+  layout.nodeDistance = 10
+  */
+
+  // コンポジット 単独では使わない
+  // const layout = new mxCompositeLayout(graph)
+
+  // edgとvertexの重なりを解消 ラベルをずらす
+  const layout2 = new mxEdgeLabelLayout(graph)
+
+  // 単独のvertexは無視される
+  const layout = new mxFastOrganicLayout(graph)
+  layout.disableEdgeStyle = false
+
+  // layout.forceConstant = 50
+  layout.initialTemp = 10
+  layout.radius = 100
+  // layout.useInputOrigin = false
+  // layout.resetEdges = false
+
+  /*
+  // 基本クラスなので使用しない
+  const layout = new mxGraphLayout(graph)
+  */
+
+  // const layout = new mxParallelEdgeLayout(graph)
+
+  // const layout = new mxPartitionLayout(graph)
+
+  /*
+  // 単独のvertexは無視される
+  const layout = new mxRadialTreeLayout(graph)
+  layout.levelDistance = 80
+  layout.autoRadius = true
+  */
+
+  // const layout = new mxStackLayout(graph)
+
+  ////////////////////////////////////////////////////////////////////////////////
+
+  // レイアウトマネージャー
   const layoutMgr = new mxLayoutManager(graph)
 
-  layoutMgr.getLayout = cell => {
-    if (cell.getChildCount() > 0) {
-      return layout
-    }
-  }
+  // 自動レイアウト
+  // layoutMgr.getLayout = cell => {
+  //   if (cell.getChildCount() > 0) {
+  //     return layout
+  //   }
+  // }
 
   let rubberband = new mxRubberband(graph)
   new mxKeyHandler(graph)
@@ -176,6 +269,7 @@ function main (container) {
   // シェイプを登録する
   registerShapes(graph)
 
+  ////////////////////////////////////////////////////////////////////////////////
   // エッジ・スタイルは要検討
   // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.ElbowConnector
   // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.SideToSide
@@ -184,6 +278,7 @@ function main (container) {
   // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.Loop
   // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.SegmentConnector
   style[mxConstants.STYLE_EDGE] = mxEdgeStyle.OrthConnector
+  ////////////////////////////////////////////////////////////////////////////////
 
   graph.alternateEdgeStyle = 'elbow=vertical'
 
@@ -191,7 +286,7 @@ function main (container) {
 
   // Gets the default parent for inserting new cells. This
   // is normally the first child of the root (ie. layer 0).
-  let parent = graph.getDefaultParent()
+  // let parent = graph.getDefaultParent()
 
   // mxLog.show()
 
@@ -202,28 +297,28 @@ function main (container) {
   })
 
   // スパン追加のハンドラー
-  $('#add-span').click(event => {
-    addSpan(event)
+  $('button#add-span').click(event => {
+    addSpan(event, graph)
   })
 
   graph.addListener(mxEvent.CELL_CONNECTED, (g, event) => {
-    console.log('CELL_CONNECTED')
-    const source = event.getProperty('source') ? 'source' : 'target'
-    console.log(`  edge id=${event.getProperty('edge').id} geometry=${JSON.stringify(event.getProperty('edge').getGeometry())}`)
-    console.log(`  vertex id=${event.getProperty('terminal').id} ${source}, geometry=${JSON.stringify(event.getProperty('terminal').getGeometry())}`)
+    // console.log('CELL_CONNECTED')
+    // const source = event.getProperty('source') ? 'source' : 'target'
+    // console.log(`  edge id=${event.getProperty('edge').id} geometry=${JSON.stringify(event.getProperty('edge').getGeometry())}`)
+    // console.log(`  vertex id=${event.getProperty('terminal').id} ${source}, geometry=${JSON.stringify(event.getProperty('terminal').getGeometry())}`)
   })
 
   graph.addListener(mxEvent.CELLS_ADDED, (g, event) => {
-    console.log('CELLS_ADDED')
-    event.getProperty('cells').forEach(cell => {
-      let type = 'unknown'
-      if (cell.isVertex()) {
-        type = 'vertex'
-      } else if (cell.isEdge()) {
-        type = 'edge'
-      }
-      console.log(`  ${type} id=${cell.id} geometry=${JSON.stringify(cell.getGeometry())}`)
-    })
+    // console.log('CELLS_ADDED')
+    // event.getProperty('cells').forEach(cell => {
+    //   let type = 'unknown'
+    //   if (cell.isVertex()) {
+    //     type = 'vertex'
+    //   } else if (cell.isEdge()) {
+    //     type = 'edge'
+    //   }
+    //   console.log(`  ${type} id=${cell.id} geometry=${JSON.stringify(cell.getGeometry())}`)
+    // })
   })
 
   // in-place editing
@@ -235,40 +330,76 @@ function main (container) {
   }
 
   // xmlエクスポートのハンドラー
-  $('#export-xml').click(event => {
-    exportXml(event)
+  $('button#export-xml').click(event => {
+    exportXml(event, graph)
   })
 
   // xmlインポートのハンドラー
-  $('#import-xml :file').change(event => {
-    importXml(event)
+  $('label#import-xml :file').change(event => {
+    importXml(event, graph)
   })
+
+  // pdfannoインポートのハンドラー
+  $('label#import-pdfanno :file').change(event => {
+    graph.model.clear()
+    importPdfanno(event, {graph, layout, layout2})
+  })
+
+  function edgeEnable(enable) {
+    graph.setConnectable(enable)
+    graph.setDisconnectOnMove(enable)
+    graph.setAllowDanglingEdges(enable)
+  }
 
   $('input#flag-edges').change(event => {
     const $label = $(event.target).parent()
     const enable = $label.hasClass('active')
     $label.find('span').text(enable ? 'Cannot create edges' : 'Can create edges')
-    graph.setConnectable(!enable)
-    graph.setDisconnectOnMove(!enable)
-    graph.setAllowDanglingEdges(!enable)
+    edgeEnable(!enable)
   })
+
+  $('button#action').click(event => {
+    // layout.execute(graph.getDefaultParent())
+    // layout2.execute(graph.getDefaultParent())
+
+    // const selected = graph.getSelectionCell()
+    // if (selected) {
+    //   layout.root = selected
+    //   layout.execute(graph.getDefaultParent())
+    // }
+  })
+  
 
   // mxLog.show()
   // for (var i in mxCellRenderer.defaultShapes) {
   //   mxLog.debug(i)
   // }
-
 }
 
 /**
  * 
- * @param {*} event 
  */
-function addSpan(event) {
+function getVertexColorName() {
+  return Object.keys(colorStyles.vertex)[randomInt(VERTEX_COLOR_STYLE_MAX)]
+}
+
+/**
+ * 
+ */
+function getEdgeColorName() {
+  return Object.keys(colorStyles.edge)[randomInt(EDGE_COLOR_STYLE_MAX)]
+}
+
+/**
+ * 
+ * @param {Event} event 
+ * @param {mxGraph} graph 
+ */
+function addSpan(event, graph) {
   graph.getModel().beginUpdate()
 
   try {
-    const color = Object.keys(colorStyles)[randomInt(COLOR_STYLE_MAX)]
+    const color = getVertexColorName()
     let shape = $('select#shape').val()
 
     if (shape === '0') {
@@ -282,7 +413,7 @@ function addSpan(event) {
     node.setAttribute('text', $('input#span-text').val())
     node.setAttribute('pdfannoId', randomInt(100))
     node.setAttribute('textrange', [randomInt(100), randomInt(100)])
-    graph.insertVertex(parent, null, node, 0, 0, VERTEX_WIDTH, VERTEX_HEIGHT, color + ';' + shape)
+    graph.insertVertex(graph.getDefaultParent(), null, node, 0, 0, VERTEX_WIDTH, VERTEX_HEIGHT, color + ';' + shape)
   } finally {
     graph.getModel().endUpdate()
   }
@@ -290,9 +421,10 @@ function addSpan(event) {
 
 /**
  * 
- * @param {*} event 
+ * @param {Event} event 
+ * @param {mxGraph} graph 
  */
-function exportXml(event) {
+function exportXml(event, graph) {
   /*
   const annotations = xmlbuilder.create('annotations')
   const spans = annotations.ele('spans')
@@ -306,29 +438,28 @@ function exportXml(event) {
     spans.importDocument(xmlbuilder.create('item').att({ id: v.id, label, text }))
   })
 
-  console.log(graph.getChildEdges(parent))
-  graph.getChildEdges(parent).forEach(edge => {
+  console.log(graph.getChildEdges(graph.getDefaultParent()))
+  graph.getChildEdges(graph.getDefaultParent()).forEach(edge => {
     relations.importDocument(xmlbuilder.create('item').att({ head: edge.source.id, tail: edge.target.id, label: edge.value ? edge.value : 'undefined' }))
   })
 
   // consoleにxmlを出力(debug)
   // 独自フォーマット
-  const xml = annotations.end({ pretty: true })
-  console.log(xml)
+  const xml2 = annotations.end({ pretty: true })
+  console.log(xml2)
   */
 
   const enc = new mxCodec(mxUtils.createXmlDocument())
   const node = enc.encode(graph.getModel())
-  // xml2 = mxUtils.getXml(node)
-  xml2 = mxUtils.getPrettyXml(node)
+  xml = mxUtils.getPrettyXml(node)
 
   // consoleにxml2を出力(debug)
   // 内部フォーマット 後ほどインポート可能
-  console.log(xml2)
+  console.log(xml)
 
   // ファイルにダウンロードする
   const a = $('<a>').attr({
-    href: URL.createObjectURL(new Blob(['<?xml version="1.0"?>\n' + xml2], {type: 'application/xml'})),
+    href: URL.createObjectURL(new Blob(['<?xml version="1.0"?>\n' + xml], {type: 'application/xml'})),
     download: 'annotations.xml'
   }).appendTo($('body'))
 
@@ -336,7 +467,6 @@ function exportXml(event) {
     window.setTimeout(() => {
       URL.revokeObjectURL(a[0].href)
     }, 0)
-
     a[0].click()
     a.remove()
   } catch (e) {
@@ -345,9 +475,10 @@ function exportXml(event) {
 
 /**
  * 
- * @param {*} event 
+ * @param {Event} event 
+ * @param {mxGraph} graph 
  */
-function importXml(event) {
+function importXml(event, graph) {
   const files = Array.from(event.target.files)
   if (files.length >= 1) {
     graph.model.beginUpdate()
@@ -368,7 +499,7 @@ function importXml(event) {
       const node = xmlDoc.documentElement
       const dec = new mxCodec(node.ownerDocument)
       dec.decode(node, graph.getModel())
-      parent = graph.getDefaultParent()
+      // parent = graph.getDefaultParent()
     }).catch(e => {
       console.error(e)
     }).finally(() => {
@@ -377,6 +508,90 @@ function importXml(event) {
   } else {
     alert('xmlファイルを選択してください。')
   }
+}
+
+/**
+ * 
+ * @param {*} event 
+ * @param {*} info
+ */
+function importPdfanno(event, info) {
+  const files = Array.from(event.target.files)
+  if (files.length >= 1) {
+    new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = event => {
+        resolve(event.target.result)
+      }
+      reader.readAsText(files[0])
+    }).then(result => {
+      return toml.parse(result)
+    }).then(toml => {
+      createPdfanno(toml, info)
+    }).catch(e => {
+      console.error(e)
+    })
+  } else {
+    alert('pdfannoファイルを選択してください。')
+  }
+}
+
+/**
+ * 
+ * @param {*} info
+ */
+function createPdfanno(toml, info) {
+  const graph = info.graph
+  const layout = info.layout
+  const layout2 = info.layout2
+
+  ;['spans', 'relations'].forEach(key => {
+    const objs = toml[key]
+    if (Array.isArray(objs)) {
+      objs.forEach(obj => {
+        if (key === 'spans') {
+          graph.getModel().beginUpdate()
+          try {
+            const shape = 'rectangle'
+            const color = getVertexColorName()
+            const doc = mxUtils.createXmlDocument()
+            const node = doc.createElement('pdfanno')
+            node.setAttribute('label', obj.label)
+            node.setAttribute('text', obj.text)
+            node.setAttribute('pdfannoId', obj.id)
+            node.setAttribute('textrange', obj.textrange)
+            graph.insertVertex(graph.getDefaultParent(), null, node, 0, 0, VERTEX_WIDTH, VERTEX_HEIGHT, color + ';' + shape)
+          } finally {
+            graph.getModel().endUpdate()
+          }
+        } else if (key === 'relations') {
+          const color = getEdgeColorName()
+          const source = findVertex(obj.head, graph)
+          const target = findVertex(obj.tail, graph)
+          if (source && target) {
+            graph.getModel().beginUpdate()
+            try {
+              graph.insertEdge(graph.getDefaultParent(), null, obj.label, source, target, color)
+            } finally {
+              graph.getModel().endUpdate()
+            }
+          }
+        }
+      })
+    }
+  })
+  layout.execute(graph.getDefaultParent())
+  layout2.execute(graph.getDefaultParent())
+}
+
+/**
+ * 
+ * @param {Integer} id 
+ */
+function findVertex(id, graph) {
+  return graph.getChildVertices(graph.getDefaultParent()).find(cell => {
+    return id === cell.getAttribute('pdfannoId', null)
+  })
 }
 
 
