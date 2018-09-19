@@ -211,22 +211,27 @@ function main (container) {
   layout.nodeDistance = 10
   */
 
+  // const layout = mxHierarchicalLayout(graph)
+  
+  // const layout = mxSwimlaneLayout(graph)
+
   // コンポジット 単独では使わない
   // const layout = new mxCompositeLayout(graph)
 
   // edgとvertexの重なりを解消 ラベルをずらす
   const layout2 = new mxEdgeLabelLayout(graph)
 
-  // 単独のvertexは無視される
+    // 単独のvertexは無視される
   const layout = new mxFastOrganicLayout(graph)
   layout.disableEdgeStyle = false
 
   // layout.forceConstant = 50
-  layout.initialTemp = 10
-  layout.radius = 100
+  layout.initialTemp = 100
+  layout.radius = 200
+  layout.forceConstant = 50
   // layout.useInputOrigin = false
   // layout.resetEdges = false
-
+  
   /*
   // 基本クラスなので使用しない
   const layout = new mxGraphLayout(graph)
@@ -367,8 +372,13 @@ function main (container) {
     //   layout.root = selected
     //   layout.execute(graph.getDefaultParent())
     // }
+
+    // layout.initialTemp++
+    // layout.reduceTemperature()
+    layout.forceConstant += 10
+    layout.execute(graph.getDefaultParent())
+    layout2.execute(graph.getDefaultParent())
   })
-  
 
   // mxLog.show()
   // for (var i in mxCellRenderer.defaultShapes) {
@@ -585,7 +595,7 @@ function createPdfanno(toml, info) {
 }
 
 /**
- * 
+ * VertexをpdfannoIdで探す
  * @param {Integer} id 
  */
 function findVertex(id, graph) {
