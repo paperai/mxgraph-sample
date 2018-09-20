@@ -259,8 +259,15 @@ function main (container) {
   wnd.setResizable(true)
   wnd.setVisible(true)
 
+  const editor = new mxEditor()
+  const graph = editor.graph
+
+  editor.setGraphContainer(container)
+  const config = mxUtils.load('config/keyhandler-commons.xml').getDocumentElement()
+  editor.configure(config)
+
   // Creates the graph inside the given container
-  var graph = new mxGraph(container)
+  // var graph = new mxGraph(container)
 
   graph.setTooltips(true)
   graph.setPanning(true)
@@ -363,12 +370,6 @@ function main (container) {
   const style = graph.getStylesheet().getDefaultEdgeStyle()
   style[mxConstants.STYLE_ROUNDED] = true
 
-  // カラースタイルを登録する
-  registerColors(graph)
-
-  // シェイプを登録する
-  registerShapes(graph)
-
   ////////////////////////////////////////////////////////////////////////////////
   // エッジ・スタイルは要検討
   // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.ElbowConnector
@@ -380,8 +381,14 @@ function main (container) {
   style[mxConstants.STYLE_EDGE] = mxEdgeStyle.OrthConnector
   ////////////////////////////////////////////////////////////////////////////////
 
-  graph.alternateEdgeStyle = 'elbow=vertical'
+  // graph.alternateEdgeStyle = 'elbow=vertical'
 
+  // カラースタイルを登録する
+  registerColors(graph)
+
+  // シェイプを登録する
+  registerShapes(graph)
+  
   mxEvent.disableContextMenu(container)
 
   // Gets the default parent for inserting new cells. This
@@ -436,13 +443,15 @@ function main (container) {
 
   // xmlインポートのハンドラー
   $('label#import-xml :file').change(event => {
-    importXml(event, graph)
+    importXml(event, {editor, graph})
+    event.target.value = ''
   })
 
   // pdfannoインポートのハンドラー
   $('label#import-pdfanno :file').change(event => {
     graph.model.clear()
-    importPdfanno(event, {graph, layout, layout2})
+    importPdfanno(event, {editor, graph, layout, layout2})
+    event.target.value = ''
   })
 
   function edgeEnable(enable) {
@@ -581,9 +590,11 @@ function exportXml(event, graph) {
 /**
  * 
  * @param {Event} event 
- * @param {mxGraph} graph 
+ * @param {mxGraph} info 
  */
-function importXml(event, graph) {
+function importXml(event, info) {
+  const editor = info.editor
+  const graph = info.graph
   const files = Array.from(event.target.files)
   if (files.length >= 1) {
     graph.model.beginUpdate()
@@ -609,6 +620,7 @@ function importXml(event, graph) {
       console.error(e)
     }).finally(() => {
       graph.model.endUpdate()
+      editor.resetHistory()
     })
   } else {
     alert('xmlファイルを選択してください。')
@@ -621,6 +633,10 @@ function importXml(event, graph) {
  * @param {*} info
  */
 function importPdfanno(event, info) {
+  const editor = info.editor
+  const graph = info.graph
+  const layout = info.layout
+  const layout2 = info.layout2
   const files = Array.from(event.target.files)
   if (files.length >= 1) {
     new Promise((resolve, reject) => {
@@ -633,10 +649,13 @@ function importPdfanno(event, info) {
       return toml.parse(result)
     }).then(toml => {
       createPdfanno(toml, info)
+      layout.execute(graph.getDefaultParent())
+      layout2.execute(graph.getDefaultParent())
+      editor.resetHistory()
     }).catch(e => {
       console.error(e)
     })
-  } else {
+    } else {
     alert('pdfannoファイルを選択してください。')
   }
 }
@@ -647,9 +666,6 @@ function importPdfanno(event, info) {
  */
 function createPdfanno(toml, info) {
   const graph = info.graph
-  const layout = info.layout
-  const layout2 = info.layout2
-
   ;['spans', 'relations'].forEach(key => {
     const objs = toml[key]
     if (Array.isArray(objs)) {
@@ -685,8 +701,6 @@ function createPdfanno(toml, info) {
       })
     }
   })
-  layout.execute(graph.getDefaultParent())
-  layout2.execute(graph.getDefaultParent())
 }
 
 /**
