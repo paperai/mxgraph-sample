@@ -323,8 +323,8 @@ function main (container) {
   // edgとvertexの重なりを解消 ラベルをずらす
   const layout2 = new mxEdgeLabelLayout(graph)
 
-    // 単独のvertexは無視される
-  const layout = new mxFastOrganicLayout(graph)
+  // 単独のvertexは無視される
+  let layout = new mxFastOrganicLayout(graph)
   layout.disableEdgeStyle = false
 
   // layout.forceConstant = 50
@@ -333,7 +333,7 @@ function main (container) {
   layout.forceConstant = 50
   // layout.useInputOrigin = false
   // layout.resetEdges = false
-  
+
   /*
   // 基本クラスなので使用しない
   const layout = new mxGraphLayout(graph)
@@ -647,8 +647,8 @@ function importPdfanno(event, info) {
       reader.readAsText(files[0])
     }).then(result => {
       return toml.parse(result)
-    }).then(toml => {
-      createPdfanno(toml, info)
+    }).then(tomlObject => {
+      createPdfanno(tomlObject, info)
       layout.execute(graph.getDefaultParent())
       layout2.execute(graph.getDefaultParent())
       editor.resetHistory()
@@ -664,10 +664,10 @@ function importPdfanno(event, info) {
  * 
  * @param {*} info
  */
-function createPdfanno(toml, info) {
+function createPdfanno(tomlObject, info) {
   const graph = info.graph
   ;['spans', 'relations'].forEach(key => {
-    const objs = toml[key]
+    const objs = tomlObject[key]
     if (Array.isArray(objs)) {
       objs.forEach(obj => {
         if (key === 'spans') {
