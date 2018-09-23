@@ -37,11 +37,11 @@ $ npm run watch
   let mxLoadResources = false
 </script>
 
-<script type="text/javascript" src="mxClient.js"></script>
+<script type="text/javascript" src="src/mxClient.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" crossorigin="anonymous"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" crossorigin="anonymous"></script>
-<script type="text/javascript" src="dist/index.bundle.js"></script>
+<script type="text/javascript" src="dist/app.bundle.js"></script>
 </head>
 
 <!-- Page passes the container for the graph to the program -->
@@ -76,10 +76,10 @@ $ npm run watch
 
       <button id='action' class="btn btn-danger btn-sm mr-sm-2">action</button>
     </div>
+  </div>
   
-    <!-- Creates a container for the graph with a grid wallpaper -->
-    <div id="graphContainer" style="overflow:auto;position:absolute;width:100%;height:100%;background:white;cursor:default;">
-    </div>
+  <!-- Creates a container for the graph with a grid wallpaper -->
+  <div id="graphContainer" style="overflow:auto;position:absolute;width:100%;height:100%;background:white;cursor:default;">
   </div>
 </body>
 
