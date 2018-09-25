@@ -12,6 +12,8 @@ $ npm run build
 または
 $ npm run watch
 
+http://localhost/.../mxgraph-sample/index.html
+
 -->
 <html>
 <head>
@@ -37,7 +39,8 @@ $ npm run watch
   let mxLoadResources = false
 </script>
 
-<script type="text/javascript" src="src/mxClient.js"></script>
+<!-- <script type="text/javascript" src="src/mxClient.js"></script> -->
+<script type="text/javascript" src="src/mxClient.min.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" crossorigin="anonymous"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" crossorigin="anonymous"></script>
@@ -68,6 +71,8 @@ $ npm run watch
         import pdfanno<input type="file" style="display: none;" accept=".pdfanno">
       </label>
 
+      <button id="fast-organic-layout" class="btn btn-primary btn-sm mr-sm-2">FastOrganicLayout</button>
+
       <div class="btn-group-sm btn-group-toggle" data-toggle="buttons">
         <label class="btn btn-secondary mr-sm-2">
           <input type="checkbox" id="flag-edges" autocomplete="off"><span>Cannot create edge</span>
@@ -81,6 +86,9 @@ $ npm run watch
   <!-- Creates a container for the graph with a grid wallpaper -->
   <div id="graphContainer" style="overflow:auto;position:absolute;width:100%;height:100%;background:white;cursor:default;">
   </div>
+	<!-- <div id="outlineContainer" style="z-index:10;position:absolute;overflow:hidden;top:0px;right:0px;width:160px;height:120px;background:transparent;border-style:solid;border-color:lightgray;"> -->
+	<div id="outlineContainer" style="z-index:10;position:absolute;overflow:hidden;top:0px;right:0px;width:160px;height:120px;background:white;border-style:solid;border-color:lightgray;">
+	</div>
 </body>
 
 </html>

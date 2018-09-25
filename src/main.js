@@ -18,6 +18,4 @@ class Main {
   }
 }
 
-$(window).on('load', () => {
-  new Main()
-})
+$(window).on('load', () => new Main())

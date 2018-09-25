@@ -1,12 +1,13 @@
 const xmlbuilder = require('xmlbuilder')
 const toml = require('toml')
 const Utils = require('./utils')
+const FastOrganicLayoutDialog = require('./fastOrganicLayoutDialog')
 
 // windowの左上コーナーの位置と幅、高さ
-const WINDOW_X = 50
+// const WINDOW_X = 50
 const WINDOW_Y = 46
-const WINDOW_WIDTH = 1200
-const WINDOW_HEIGHT = 600
+// const WINDOW_WIDTH = 1200
+// const WINDOW_HEIGHT = 600
 
 // ノードの幅と高さ
 const VERTEX_WIDTH = 80
@@ -124,13 +125,30 @@ class Editor extends mxEditor {
   init () {
     this.createWindow(this.container)
 
+    // this.disableContextMenu = false
+
     this.setGraphContainer(this.container)
 
     // Sets the image to be used for creating new connections
     // mxConnectionHandler.prototype.connectImage = new mxImage('images/handle-main.png', 17, 17)
     mxConnectionHandler.prototype.connectImage = new mxImage('images/connector.gif', 16, 16)
 
-    mxEvent.disableContextMenu(this.container)
+    // ガイドを有効にする
+    mxGraphHandler.prototype.guidesEnabled = true
+
+    // Altキーを押している間はガイドをする
+    mxGraphHandler.prototype.useGuidesForEvent = event => {
+      return mxEvent.isAltDown(event.getEvent())
+    };
+
+    // ガイドの色
+    mxConstants.GUIDE_COLOR = '#FF0000'
+
+    // ガイドの線幅
+    mxConstants.GUIDE_STROKEWIDTH = 1
+
+		// Enables snapping waypoints to terminals
+		mxEdgeHandler.prototype.snapToTerminals = true
 
     this.graph.setTooltips(true)
     this.graph.setPanning(true)
@@ -138,6 +156,8 @@ class Editor extends mxEditor {
     this.graph.setAutoSizeCells(true)
     this.graph.setDisconnectOnMove(true)
     this.graph.setAllowDanglingEdges(true)
+
+    this.graph.gridSize = 10
 
     // セルのラベルの編集を禁止する
     this.graph.setCellsEditable(false)
@@ -161,6 +181,10 @@ class Editor extends mxEditor {
     }
 
     this.keyHandler = new mxKeyHandler(this.graph)
+
+		// Creates the outline (navigator, overview) for moving
+    // around the graph in the top, right corner of the window.
+    this.outline = new mxOutline(this.graph, document.getElementById('outlineContainer'))
 
     ////////////////////////////////////////////////////////////////////////////////
     // レイアウト・スタイルは要検討
@@ -188,14 +212,6 @@ class Editor extends mxEditor {
 
     // 単独のvertexは無視される
     this.layout = new mxFastOrganicLayout(this.graph)
-    this.layout.disableEdgeStyle = false
-
-    // layout.forceConstant = 50
-    this.layout.initialTemp = 100
-    this.layout.radius = 200
-    this.layout.forceConstant = 50
-    // this.layout.useInputOrigin = false
-    // this.layout.resetEdges = false
 
     /*
     // 基本クラスなので使用しない
@@ -217,20 +233,9 @@ class Editor extends mxEditor {
 
     ////////////////////////////////////////////////////////////////////////////////
 
-    ////////////////////////////////////////////////////////////////////////////////
-    // エッジ・スタイルは要検討
-    const style = this.graph.getStylesheet().getDefaultEdgeStyle()
-    style[mxConstants.STYLE_ROUNDED] = true
+    // エッジ・スタイルを設定
+    this.setDefaultEdgeStyle()
 
-    // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.ElbowConnector
-    // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.SideToSide
-    // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.TopToBottom
-    // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.EntityRelation
-    // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.Loop
-    // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.SegmentConnector
-    style[mxConstants.STYLE_EDGE] = mxEdgeStyle.OrthConnector
-    ////////////////////////////////////////////////////////////////////////////////
-  
     // カラースタイルを登録する
     this.registerColors(this.graph)
 
@@ -244,6 +249,43 @@ class Editor extends mxEditor {
     // for (var i in mxCellRenderer.defaultShapes) {
     //   mxLog.debug(i)
     // }
+  }
+
+  /**
+   * エッジ・スタイルは要検討
+   * 
+   */
+  setDefaultEdgeStyle() {
+    const style = this.graph.getStylesheet().getDefaultEdgeStyle()
+    style[mxConstants.STYLE_ROUNDED] = true
+
+    // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.ElbowConnector
+    // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.SideToSide
+    // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.TopToBottom
+    // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.EntityRelation
+    // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.Loop
+    // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.SegmentConnector
+    style[mxConstants.STYLE_EDGE] = mxEdgeStyle.OrthConnector
+  }
+
+  /**
+   * 
+   * @param {*} cells 
+   * @param {*} key 
+   * @param {*} value 
+   */
+  setEdgeStyles(cells, key, value) {
+    if (typeof cells === 'string') {
+      if (cells === 'all') {
+        cells = this.graph.getChildEdges(this.graph.getDefaultParent())
+      } else {
+        return
+      }
+    } else {
+      return
+    }
+    mxUtils.setCellStyles(this.graph.getModel(), cells, 'noEdgeStyle', null)
+    mxUtils.setCellStyles(this.graph.getModel(), cells, key, value)
   }
 
   /**
@@ -591,6 +633,31 @@ class Editor extends mxEditor {
       event.target.value = ''
     })
 
+    // FastOrganicLayout
+    $('button#fast-organic-layout').click(event => {
+      const dialog = new FastOrganicLayoutDialog({
+        forceConstant: this.layout.forceConstant,
+        useInputOrigin: this.layout.useInputOrigin,
+        resetEdges: this.layout.resetEdges,
+        disableEdgeStyle: this.layout.disableEdgeStyle
+      })
+      dialog.show('FastOrganicLayout', 200, null, () => {
+        this.layout.forceConstant = dialog.forceConstant.value
+        this.layout.useInputOrigin = dialog.useInputOrigin.checked
+        this.layout.resetEdges = dialog.resetEdges.checked
+        let prev = this.layout.disableEdgeStyle
+        this.layout.disableEdgeStyle = dialog.disableEdgeStyle.checked
+        if (!this.layout.disableEdgeStyle) {
+          if (prev !== this.layout.disableEdgeStyle) {
+            this.setEdgeStyles('all', mxConstants.STYLE_EDGE, mxConstants.EDGESTYLE_ORTHOGONAL)
+          }
+        }
+        this.layout.execute(this.graph.getDefaultParent())
+      }, () => {
+        dialog.close()
+      })
+    })
+    
     $('input#flag-edges').change(event => {
       const $label = $(event.target).parent()
       const enable = $label.hasClass('active')
@@ -611,9 +678,11 @@ class Editor extends mxEditor {
       // layout.initialTemp++
       // layout.reduceTemperature()
 
-      this.layout.forceConstant += 5
-      this.layout.execute(this.graph.getDefaultParent())
-      this.layout2.execute(this.graph.getDefaultParent())
+      // this.layout.forceConstant += 5
+      // this.layout.execute(this.graph.getDefaultParent())
+      // this.layout2.execute(this.graph.getDefaultParent())
+
+      alert('未実装')
     })
   }
 }

@@ -6961,6 +6961,49 @@ module.exports = (function() {
 
 /***/ }),
 
+/***/ "./src/dialog.js":
+/*!***********************!*\
+  !*** ./src/dialog.js ***!
+  \***********************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+const MyWindow = __webpack_require__(/*! ./mywindow */ "./src/mywindow.js")
+
+class Dialog {
+  constructor() {
+  }
+
+  /**
+   * 
+   * @param {String} title 
+   * @param {Element} content 
+   * @param {Integer} width 
+   * @param {Integer} height 
+   */
+  showDialog(title, content, width, height) {
+    const x = Math.max(0, document.body.scrollWidth / 2 - width / 2)
+    const y = Math.max(10, (document.body.scrollHeight || document.documentElement.scrollHeight) / 2 - height * 2 / 3)
+    this.wnd = new MyWindow(title, content, x, y, width, height, {
+      minimizable: false, movable:true, styles: {zIndex: 9000}})
+    this.wnd.setClosable(true)
+    this.wnd.setVisible(true)
+    return this.wnd
+  }
+
+  /**
+   * 
+   */
+  close() {
+    this.wnd.destroy()
+  }
+}
+
+module.exports = Dialog
+
+
+/***/ }),
+
 /***/ "./src/editor.js":
 /*!***********************!*\
   !*** ./src/editor.js ***!
@@ -6971,12 +7014,13 @@ module.exports = (function() {
 const xmlbuilder = __webpack_require__(/*! xmlbuilder */ "./node_modules/xmlbuilder/lib/index.js")
 const toml = __webpack_require__(/*! toml */ "./node_modules/toml/index.js")
 const Utils = __webpack_require__(/*! ./utils */ "./src/utils.js")
+const FastOrganicLayoutDialog = __webpack_require__(/*! ./fastOrganicLayoutDialog */ "./src/fastOrganicLayoutDialog.js")
 
 // windowの左上コーナーの位置と幅、高さ
-const WINDOW_X = 50
+// const WINDOW_X = 50
 const WINDOW_Y = 46
-const WINDOW_WIDTH = 1200
-const WINDOW_HEIGHT = 600
+// const WINDOW_WIDTH = 1200
+// const WINDOW_HEIGHT = 600
 
 // ノードの幅と高さ
 const VERTEX_WIDTH = 80
@@ -7094,13 +7138,30 @@ class Editor extends mxEditor {
   init () {
     this.createWindow(this.container)
 
+    // this.disableContextMenu = false
+
     this.setGraphContainer(this.container)
 
     // Sets the image to be used for creating new connections
     // mxConnectionHandler.prototype.connectImage = new mxImage('images/handle-main.png', 17, 17)
     mxConnectionHandler.prototype.connectImage = new mxImage('images/connector.gif', 16, 16)
 
-    mxEvent.disableContextMenu(this.container)
+    // ガイドを有効にする
+    mxGraphHandler.prototype.guidesEnabled = true
+
+    // Altキーを押している間はガイドをする
+    mxGraphHandler.prototype.useGuidesForEvent = event => {
+      return mxEvent.isAltDown(event.getEvent())
+    };
+
+    // ガイドの色
+    mxConstants.GUIDE_COLOR = '#FF0000'
+
+    // ガイドの線幅
+    mxConstants.GUIDE_STROKEWIDTH = 1
+
+		// Enables snapping waypoints to terminals
+		mxEdgeHandler.prototype.snapToTerminals = true
 
     this.graph.setTooltips(true)
     this.graph.setPanning(true)
@@ -7108,6 +7169,8 @@ class Editor extends mxEditor {
     this.graph.setAutoSizeCells(true)
     this.graph.setDisconnectOnMove(true)
     this.graph.setAllowDanglingEdges(true)
+
+    this.graph.gridSize = 10
 
     // セルのラベルの編集を禁止する
     this.graph.setCellsEditable(false)
@@ -7131,6 +7194,10 @@ class Editor extends mxEditor {
     }
 
     this.keyHandler = new mxKeyHandler(this.graph)
+
+		// Creates the outline (navigator, overview) for moving
+    // around the graph in the top, right corner of the window.
+    this.outline = new mxOutline(this.graph, document.getElementById('outlineContainer'))
 
     ////////////////////////////////////////////////////////////////////////////////
     // レイアウト・スタイルは要検討
@@ -7158,14 +7225,6 @@ class Editor extends mxEditor {
 
     // 単独のvertexは無視される
     this.layout = new mxFastOrganicLayout(this.graph)
-    this.layout.disableEdgeStyle = false
-
-    // layout.forceConstant = 50
-    this.layout.initialTemp = 100
-    this.layout.radius = 200
-    this.layout.forceConstant = 50
-    // this.layout.useInputOrigin = false
-    // this.layout.resetEdges = false
 
     /*
     // 基本クラスなので使用しない
@@ -7187,20 +7246,9 @@ class Editor extends mxEditor {
 
     ////////////////////////////////////////////////////////////////////////////////
 
-    ////////////////////////////////////////////////////////////////////////////////
-    // エッジ・スタイルは要検討
-    const style = this.graph.getStylesheet().getDefaultEdgeStyle()
-    style[mxConstants.STYLE_ROUNDED] = true
+    // エッジ・スタイルを設定
+    this.setDefaultEdgeStyle()
 
-    // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.ElbowConnector
-    // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.SideToSide
-    // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.TopToBottom
-    // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.EntityRelation
-    // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.Loop
-    // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.SegmentConnector
-    style[mxConstants.STYLE_EDGE] = mxEdgeStyle.OrthConnector
-    ////////////////////////////////////////////////////////////////////////////////
-  
     // カラースタイルを登録する
     this.registerColors(this.graph)
 
@@ -7214,6 +7262,43 @@ class Editor extends mxEditor {
     // for (var i in mxCellRenderer.defaultShapes) {
     //   mxLog.debug(i)
     // }
+  }
+
+  /**
+   * エッジ・スタイルは要検討
+   * 
+   */
+  setDefaultEdgeStyle() {
+    const style = this.graph.getStylesheet().getDefaultEdgeStyle()
+    style[mxConstants.STYLE_ROUNDED] = true
+
+    // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.ElbowConnector
+    // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.SideToSide
+    // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.TopToBottom
+    // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.EntityRelation
+    // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.Loop
+    // style[mxConstants.STYLE_EDGE] = mxEdgeStyle.SegmentConnector
+    style[mxConstants.STYLE_EDGE] = mxEdgeStyle.OrthConnector
+  }
+
+  /**
+   * 
+   * @param {*} cells 
+   * @param {*} key 
+   * @param {*} value 
+   */
+  setEdgeStyles(cells, key, value) {
+    if (typeof cells === 'string') {
+      if (cells === 'all') {
+        cells = this.graph.getChildEdges(this.graph.getDefaultParent())
+      } else {
+        return
+      }
+    } else {
+      return
+    }
+    mxUtils.setCellStyles(this.graph.getModel(), cells, 'noEdgeStyle', null)
+    mxUtils.setCellStyles(this.graph.getModel(), cells, key, value)
   }
 
   /**
@@ -7561,6 +7646,31 @@ class Editor extends mxEditor {
       event.target.value = ''
     })
 
+    // FastOrganicLayout
+    $('button#fast-organic-layout').click(event => {
+      const dialog = new FastOrganicLayoutDialog({
+        forceConstant: this.layout.forceConstant,
+        useInputOrigin: this.layout.useInputOrigin,
+        resetEdges: this.layout.resetEdges,
+        disableEdgeStyle: this.layout.disableEdgeStyle
+      })
+      dialog.show('FastOrganicLayout', 200, null, () => {
+        this.layout.forceConstant = dialog.forceConstant.value
+        this.layout.useInputOrigin = dialog.useInputOrigin.checked
+        this.layout.resetEdges = dialog.resetEdges.checked
+        let prev = this.layout.disableEdgeStyle
+        this.layout.disableEdgeStyle = dialog.disableEdgeStyle.checked
+        if (!this.layout.disableEdgeStyle) {
+          if (prev !== this.layout.disableEdgeStyle) {
+            this.setEdgeStyles('all', mxConstants.STYLE_EDGE, mxConstants.EDGESTYLE_ORTHOGONAL)
+          }
+        }
+        this.layout.execute(this.graph.getDefaultParent())
+      }, () => {
+        dialog.close()
+      })
+    })
+    
     $('input#flag-edges').change(event => {
       const $label = $(event.target).parent()
       const enable = $label.hasClass('active')
@@ -7581,14 +7691,96 @@ class Editor extends mxEditor {
       // layout.initialTemp++
       // layout.reduceTemperature()
 
-      this.layout.forceConstant += 5
-      this.layout.execute(this.graph.getDefaultParent())
-      this.layout2.execute(this.graph.getDefaultParent())
+      // this.layout.forceConstant += 5
+      // this.layout.execute(this.graph.getDefaultParent())
+      // this.layout2.execute(this.graph.getDefaultParent())
+
+      alert('未実装')
     })
   }
 }
 
 module.exports = Editor
+
+
+/***/ }),
+
+/***/ "./src/fastOrganicLayoutDialog.js":
+/*!****************************************!*\
+  !*** ./src/fastOrganicLayoutDialog.js ***!
+  \****************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+const Dialog = __webpack_require__(/*! ./dialog */ "./src/dialog.js")
+const Form = __webpack_require__(/*! ./form */ "./src/form.js")
+
+class FastOrganicLayoutDialog extends Dialog {
+  constructor(initValues) {
+    super()
+    this.initValues = initValues
+  }
+
+  /**
+   * 
+   * @param {String} title 
+   * @param {Integer} width 
+   * @param {Integer} height 
+   */
+  show(title, width, height, applyFunc, closeFunc) {
+    const form = new Form('parameter')
+    this.forceConstant = form.addText('forceConstant', this.initValues.forceConstant || '50')
+    this.useInputOrigin = form.addCheckbox('useInputOrigin', this.initValues.useInputOrigin || true)
+    this.resetEdges = form.addCheckbox('resetEdges', this.initValues.resetEdges || true)
+    this.disableEdgeStyle = form.addCheckbox('disableEdgeStyle', this.initValues.disableEdgeStyle || true)
+    form.addButtons([
+      {label: 'Apply', callback: applyFunc}, 
+      {label: 'Close', callback: closeFunc}
+    ])
+    this.showDialog(title, form.getTable(), width, height)
+  }
+}
+
+module.exports = FastOrganicLayoutDialog
+
+
+/***/ }),
+
+/***/ "./src/form.js":
+/*!*********************!*\
+  !*** ./src/form.js ***!
+  \*********************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+class Form extends mxForm {
+  constructor(className) {
+    super(className)
+  }
+
+  /**
+   * 
+   * @param {Object} buttons 
+   */
+  addButtons(buttons) {
+    let tr = document.createElement('tr')
+    let td = document.createElement('td')
+    tr.appendChild(td)
+    td = document.createElement('td')
+  
+    for (let button of buttons) {
+      let btn = document.createElement('button')
+      mxUtils.write(btn, button.label)
+      td.appendChild(btn)
+      mxEvent.addListener(btn, 'click', button.callback)
+    }
+
+    tr.appendChild(td)
+    this.body.appendChild(tr)
+  }
+}
+
+module.exports = Form
 
 
 /***/ }),
@@ -7620,9 +7812,63 @@ class Main {
   }
 }
 
-$(window).on('load', () => {
-  new Main()
-})
+$(window).on('load', () => new Main())
+
+
+/***/ }),
+
+/***/ "./src/mywindow.js":
+/*!*************************!*\
+  !*** ./src/mywindow.js ***!
+  \*************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+const ALWAYS_ON_TOP = 9000
+
+class MyWindow extends mxWindow {
+  constructor(title, content, x, y, width, height, options) {
+    let {minimizable, movable, replaceNode, className} = options
+    super(title, content, x, y, width, height, minimizable, movable, replaceNode, className)
+    this.options = options
+    for (let key in this.options.styles) {
+      this.div.style[key] = this.options.styles[key]
+    }
+  }
+
+  /**
+   * Function: activate
+   *
+   * Puts the window on top of all other windows.
+   */
+  activate() {
+    if (mxWindow.activeWindow != this) {
+      var style = mxUtils.getCurrentStyle(this.getElement())
+      var index = (style != null) ? style.zIndex : 3
+      if (index >= ALWAYS_ON_TOP) {
+        return
+      }
+      if (mxWindow.activeWindow) {
+        var elt = mxWindow.activeWindow.getElement()
+
+        if (elt != null && elt.style != null) {
+          if (elt.style.zIndex >= ALWAYS_ON_TOP) {
+            return
+          }
+          elt.style.zIndex = index
+        }
+      }
+
+      var previousWindow = mxWindow.activeWindow
+      this.getElement().style.zIndex = parseInt(index) + 1
+      mxWindow.activeWindow = this
+
+      this.fireEvent(new mxEventObject(mxEvent.ACTIVATE, 'previousWindow', previousWindow))
+    }
+  }
+}
+
+module.exports = MyWindow
 
 
 /***/ }),
