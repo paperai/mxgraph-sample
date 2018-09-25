@@ -7225,7 +7225,8 @@ class Editor extends mxEditor {
 
     // 単独のvertexは無視される
     this.layout = new mxFastOrganicLayout(this.graph)
-
+    this.layout.disableEdgeStyle = false
+    resetEdges: this.layout.resetEdges,
     /*
     // 基本クラスなので使用しない
     const layout = new mxGraphLayout(graph)
@@ -7654,6 +7655,7 @@ class Editor extends mxEditor {
         resetEdges: this.layout.resetEdges,
         disableEdgeStyle: this.layout.disableEdgeStyle
       })
+
       dialog.show('FastOrganicLayout', 200, null, () => {
         this.layout.forceConstant = dialog.forceConstant.value
         this.layout.useInputOrigin = dialog.useInputOrigin.checked
@@ -7687,13 +7689,6 @@ class Editor extends mxEditor {
       //   layout.root = selected
       //   layout.execute(graph.getDefaultParent())
       // }
-
-      // layout.initialTemp++
-      // layout.reduceTemperature()
-
-      // this.layout.forceConstant += 5
-      // this.layout.execute(this.graph.getDefaultParent())
-      // this.layout2.execute(this.graph.getDefaultParent())
 
       alert('未実装')
     })
@@ -7729,10 +7724,11 @@ class FastOrganicLayoutDialog extends Dialog {
    */
   show(title, width, height, applyFunc, closeFunc) {
     const form = new Form('parameter')
-    this.forceConstant = form.addText('forceConstant', this.initValues.forceConstant || '50')
-    this.useInputOrigin = form.addCheckbox('useInputOrigin', this.initValues.useInputOrigin || true)
-    this.resetEdges = form.addCheckbox('resetEdges', this.initValues.resetEdges || true)
-    this.disableEdgeStyle = form.addCheckbox('disableEdgeStyle', this.initValues.disableEdgeStyle || true)
+    this.forceConstant = form.addText('forceConstant', this.initValues.forceConstant)
+    this.useInputOrigin = form.addCheckbox('useInputOrigin', this.initValues.useInputOrigin)
+    this.resetEdges = form.addCheckbox('resetEdges', this.initValues.resetEdges)
+    this.disableEdgeStyle = form.addCheckbox('disableEdgeStyle', this.initValues.disableEdgeStyle)
+
     form.addButtons([
       {label: 'Apply', callback: applyFunc}, 
       {label: 'Close', callback: closeFunc}

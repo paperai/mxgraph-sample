@@ -15,10 +15,11 @@ class FastOrganicLayoutDialog extends Dialog {
    */
   show(title, width, height, applyFunc, closeFunc) {
     const form = new Form('parameter')
-    this.forceConstant = form.addText('forceConstant', this.initValues.forceConstant || '50')
-    this.useInputOrigin = form.addCheckbox('useInputOrigin', this.initValues.useInputOrigin || true)
-    this.resetEdges = form.addCheckbox('resetEdges', this.initValues.resetEdges || true)
-    this.disableEdgeStyle = form.addCheckbox('disableEdgeStyle', this.initValues.disableEdgeStyle || true)
+    this.forceConstant = form.addText('forceConstant', this.initValues.forceConstant)
+    this.useInputOrigin = form.addCheckbox('useInputOrigin', this.initValues.useInputOrigin)
+    this.resetEdges = form.addCheckbox('resetEdges', this.initValues.resetEdges)
+    this.disableEdgeStyle = form.addCheckbox('disableEdgeStyle', this.initValues.disableEdgeStyle)
+
     form.addButtons([
       {label: 'Apply', callback: applyFunc}, 
       {label: 'Close', callback: closeFunc}

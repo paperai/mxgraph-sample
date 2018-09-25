@@ -212,7 +212,8 @@ class Editor extends mxEditor {
 
     // 単独のvertexは無視される
     this.layout = new mxFastOrganicLayout(this.graph)
-
+    this.layout.disableEdgeStyle = false
+    resetEdges: this.layout.resetEdges,
     /*
     // 基本クラスなので使用しない
     const layout = new mxGraphLayout(graph)
@@ -641,6 +642,7 @@ class Editor extends mxEditor {
         resetEdges: this.layout.resetEdges,
         disableEdgeStyle: this.layout.disableEdgeStyle
       })
+
       dialog.show('FastOrganicLayout', 200, null, () => {
         this.layout.forceConstant = dialog.forceConstant.value
         this.layout.useInputOrigin = dialog.useInputOrigin.checked
@@ -674,13 +676,6 @@ class Editor extends mxEditor {
       //   layout.root = selected
       //   layout.execute(graph.getDefaultParent())
       // }
-
-      // layout.initialTemp++
-      // layout.reduceTemperature()
-
-      // this.layout.forceConstant += 5
-      // this.layout.execute(this.graph.getDefaultParent())
-      // this.layout2.execute(this.graph.getDefaultParent())
 
       alert('未実装')
     })
