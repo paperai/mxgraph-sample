@@ -7678,7 +7678,13 @@ class Editor extends mxEditor {
         dialog.close()
       })
     })
-    
+
+    // CompactTreeLayout
+    $('button#compact-tree-layout').click(event => {
+
+
+    })
+
     $('input#flag-edges').change(event => {
       const $label = $(event.target).parent()
       const enable = $label.hasClass('active')
