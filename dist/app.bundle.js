@@ -7226,13 +7226,15 @@ class Editor extends mxEditor {
     // 単独のvertexは無視される
     this.layout = new mxFastOrganicLayout(this.graph)
     this.layout.disableEdgeStyle = false
-    resetEdges: this.layout.resetEdges,
+    
+
+
     /*
     // 基本クラスなので使用しない
     const layout = new mxGraphLayout(graph)
     */
 
-    // const layout = new mxParallelEdgeLayout(graph)
+    // this.layout = new mxParallelEdgeLayout(this.graph)
 
     // const layout = new mxPartitionLayout(graph)
 
@@ -7373,7 +7375,7 @@ class Editor extends mxEditor {
    * @param {Boolean} doLayout 
    */
   beforeLoad() {
-    this.layout.forceConstant = 50
+    // this.layout.forceConstant = 50
   }
 
   /**
@@ -7653,7 +7655,9 @@ class Editor extends mxEditor {
         forceConstant: this.layout.forceConstant,
         useInputOrigin: this.layout.useInputOrigin,
         resetEdges: this.layout.resetEdges,
-        disableEdgeStyle: this.layout.disableEdgeStyle
+        disableEdgeStyle: this.layout.disableEdgeStyle,
+        initialTemp: this.layout.initialTemp,
+        maxIterations: this.layout.maxIterations
       })
 
       dialog.show('FastOrganicLayout', 200, null, () => {
@@ -7667,6 +7671,8 @@ class Editor extends mxEditor {
             this.setEdgeStyles('all', mxConstants.STYLE_EDGE, mxConstants.EDGESTYLE_ORTHOGONAL)
           }
         }
+        this.layout.initialTemp = dialog.initialTemp.value
+        this.layout.maxIterations = dialog.maxIterations.value
         this.layout.execute(this.graph.getDefaultParent())
       }, () => {
         dialog.close()
@@ -7681,14 +7687,24 @@ class Editor extends mxEditor {
     })
 
     $('button#action').click(event => {
-      // layout.execute(graph.getDefaultParent())
-      // layout2.execute(graph.getDefaultParent())
-
       // const selected = graph.getSelectionCell()
       // if (selected) {
       //   layout.root = selected
       //   layout.execute(graph.getDefaultParent())
       // }
+
+      // var div1 = document.createElement('div')
+      // var wnd1 = new MyWindow('div', div1, 100, 100, 200, 200, true, true)
+      // wnd1.setVisible(true)
+      // var div2 = document.createElement('table')
+      // var wnd2 = new MyWindow('table', div2, 100, 100, 200, 200, true, true)
+      // wnd2.setVisible(true)
+
+      // const lo = new mxParallelEdgeLayout(this.graph)
+      // lo.execute(this.graph.getDefaultParent())
+
+      // const lo = new mxEdgeLabelLayout(this.graph)
+      // lo.execute(this.graph.getDefaultParent())
 
       alert('未実装')
     })
@@ -7725,6 +7741,8 @@ class FastOrganicLayoutDialog extends Dialog {
   show(title, width, height, applyFunc, closeFunc) {
     const form = new Form('parameter')
     this.forceConstant = form.addText('forceConstant', this.initValues.forceConstant)
+    this.initialTemp = form.addText('initialTemp', this.initValues.initialTemp)
+    this.maxIterations = form.addText('maxIterations', this.initValues.maxIterations)
     this.useInputOrigin = form.addCheckbox('useInputOrigin', this.initValues.useInputOrigin)
     this.resetEdges = form.addCheckbox('resetEdges', this.initValues.resetEdges)
     this.disableEdgeStyle = form.addCheckbox('disableEdgeStyle', this.initValues.disableEdgeStyle)
@@ -7844,6 +7862,7 @@ class MyWindow extends mxWindow {
       if (index >= ALWAYS_ON_TOP) {
         return
       }
+
       if (mxWindow.activeWindow) {
         var elt = mxWindow.activeWindow.getElement()
 
@@ -7858,7 +7877,6 @@ class MyWindow extends mxWindow {
       var previousWindow = mxWindow.activeWindow
       this.getElement().style.zIndex = parseInt(index) + 1
       mxWindow.activeWindow = this
-
       this.fireEvent(new mxEventObject(mxEvent.ACTIVATE, 'previousWindow', previousWindow))
     }
   }

@@ -22,6 +22,7 @@ class MyWindow extends mxWindow {
       if (index >= ALWAYS_ON_TOP) {
         return
       }
+
       if (mxWindow.activeWindow) {
         var elt = mxWindow.activeWindow.getElement()
 
@@ -36,7 +37,6 @@ class MyWindow extends mxWindow {
       var previousWindow = mxWindow.activeWindow
       this.getElement().style.zIndex = parseInt(index) + 1
       mxWindow.activeWindow = this
-
       this.fireEvent(new mxEventObject(mxEvent.ACTIVATE, 'previousWindow', previousWindow))
     }
   }

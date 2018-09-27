@@ -16,6 +16,8 @@ class FastOrganicLayoutDialog extends Dialog {
   show(title, width, height, applyFunc, closeFunc) {
     const form = new Form('parameter')
     this.forceConstant = form.addText('forceConstant', this.initValues.forceConstant)
+    this.initialTemp = form.addText('initialTemp', this.initValues.initialTemp)
+    this.maxIterations = form.addText('maxIterations', this.initValues.maxIterations)
     this.useInputOrigin = form.addCheckbox('useInputOrigin', this.initValues.useInputOrigin)
     this.resetEdges = form.addCheckbox('resetEdges', this.initValues.resetEdges)
     this.disableEdgeStyle = form.addCheckbox('disableEdgeStyle', this.initValues.disableEdgeStyle)
