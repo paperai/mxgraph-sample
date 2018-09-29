@@ -21525,7 +21525,7 @@ const Utils = __webpack_require__(/*! ./utils */ "./src/utils.js")
 const FastOrganicLayoutDialog = __webpack_require__(/*! ./fastOrganicLayoutDialog */ "./src/fastOrganicLayoutDialog.js")
 const CompactTreeLayoutDialog = __webpack_require__(/*! ./compactTreeLayoutDialog */ "./src/compactTreeLayoutDialog.js")
 
-// const MyWindow = require('./mywindow')
+const MyWindow = __webpack_require__(/*! ./mywindow */ "./src/mywindow.js")
 // const Dialog = require('./dialog')
 // const LayoutDialog = require('./layoutDialog')
 
@@ -22182,11 +22182,21 @@ class Editor extends mxEditor {
       lo.execute(this.graph.getDefaultParent())
       */
 
-      /*
-      var div1 = document.createElement('div')
-      const wnd1 = new MyWindow('Test', div1, null, 10, 400, 300)
+      var div1 = document.createElement('div1')
+      const wnd1 = new MyWindow('Test1', div1, 10, 10, 400, 300, {styles:{zIndex: 9001}})
       wnd1.show()
-      */
+
+      var div2 = document.createElement('div2')
+      const wnd2 = new MyWindow('Test2', div2, 10, 10, 400, 300, {styles:{zIndex: 9002}})
+      wnd2.show()
+
+      var div3 = document.createElement('div3')
+      const wnd3 = new MyWindow('Test3', div3, 10, 10, 400, 300, {styles:{zIndex: 10}})
+      wnd3.show()
+
+      var div4 = document.createElement('div4')
+      const wnd4 = new MyWindow('Test4', div4, 10, 10, 400, 300, {styles:{zIndex: 11}})
+      wnd4.show()
 
       /*
       const div1 = document.createElement('div')
@@ -22454,27 +22464,31 @@ class MyWindow extends mxWindow {
    */
   activate() {
     if (mxWindow.activeWindow != this) {
-      var style = mxUtils.getCurrentStyle(this.getElement())
-      var index = (style != null) ? style.zIndex : 3
-      if (index >= Constants.WINDOW_ALWAYS_ON_TOP) {
-        return
-      }
+      const style = mxUtils.getCurrentStyle(this.getElement())
+      const index = (style != null) ? parseInt(style.zIndex, 10) : 3
+      const top = Constants.WINDOW_ALWAYS_ON_TOP
 
       if (mxWindow.activeWindow) {
-        var elt = mxWindow.activeWindow.getElement()
+        const elt = mxWindow.activeWindow.getElement()
 
         if (elt != null && elt.style != null) {
-          if (elt.style.zIndex >= Constants.WINDOW_ALWAYS_ON_TOP) {
+          const index2 = elt.style.zIndex
+
+          if ((index >= top && index2 < top) || (index < top && index2 >= top)) {
             return
           }
+
           elt.style.zIndex = index
         }
       }
 
-      var previousWindow = mxWindow.activeWindow
-      this.getElement().style.zIndex = parseInt(index) + 1
-      mxWindow.activeWindow = this
-      this.fireEvent(new mxEventObject(mxEvent.ACTIVATE, 'previousWindow', previousWindow))
+      const previousWindow = mxWindow.activeWindow
+      this.getElement().style.zIndex = index + 1
+
+      if (index < top) {
+        mxWindow.activeWindow = this
+        this.fireEvent(new mxEventObject(mxEvent.ACTIVATE, 'previousWindow', previousWindow))
+      }
     }
   }
 }

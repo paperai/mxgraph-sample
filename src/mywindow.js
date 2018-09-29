@@ -50,27 +50,31 @@ class MyWindow extends mxWindow {
    */
   activate() {
     if (mxWindow.activeWindow != this) {
-      var style = mxUtils.getCurrentStyle(this.getElement())
-      var index = (style != null) ? style.zIndex : 3
-      if (index >= Constants.WINDOW_ALWAYS_ON_TOP) {
-        return
-      }
+      const style = mxUtils.getCurrentStyle(this.getElement())
+      const index = (style != null) ? parseInt(style.zIndex, 10) : 3
+      const top = Constants.WINDOW_ALWAYS_ON_TOP
 
       if (mxWindow.activeWindow) {
-        var elt = mxWindow.activeWindow.getElement()
+        const elt = mxWindow.activeWindow.getElement()
 
         if (elt != null && elt.style != null) {
-          if (elt.style.zIndex >= Constants.WINDOW_ALWAYS_ON_TOP) {
+          const index2 = elt.style.zIndex
+
+          if ((index >= top && index2 < top) || (index < top && index2 >= top)) {
             return
           }
+
           elt.style.zIndex = index
         }
       }
 
-      var previousWindow = mxWindow.activeWindow
-      this.getElement().style.zIndex = parseInt(index) + 1
-      mxWindow.activeWindow = this
-      this.fireEvent(new mxEventObject(mxEvent.ACTIVATE, 'previousWindow', previousWindow))
+      const previousWindow = mxWindow.activeWindow
+      this.getElement().style.zIndex = index + 1
+
+      if (index < top) {
+        mxWindow.activeWindow = this
+        this.fireEvent(new mxEventObject(mxEvent.ACTIVATE, 'previousWindow', previousWindow))
+      }
     }
   }
 }

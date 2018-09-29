@@ -4,7 +4,7 @@ const Utils = require('./utils')
 const FastOrganicLayoutDialog = require('./fastOrganicLayoutDialog')
 const CompactTreeLayoutDialog = require('./compactTreeLayoutDialog')
 
-// const MyWindow = require('./mywindow')
+const MyWindow = require('./mywindow')
 // const Dialog = require('./dialog')
 // const LayoutDialog = require('./layoutDialog')
 
@@ -661,11 +661,21 @@ class Editor extends mxEditor {
       lo.execute(this.graph.getDefaultParent())
       */
 
-      /*
-      var div1 = document.createElement('div')
-      const wnd1 = new MyWindow('Test', div1, null, 10, 400, 300)
+      var div1 = document.createElement('div1')
+      const wnd1 = new MyWindow('Test1', div1, 10, 10, 400, 300, {styles:{zIndex: 9001}})
       wnd1.show()
-      */
+
+      var div2 = document.createElement('div2')
+      const wnd2 = new MyWindow('Test2', div2, 10, 10, 400, 300, {styles:{zIndex: 9002}})
+      wnd2.show()
+
+      var div3 = document.createElement('div3')
+      const wnd3 = new MyWindow('Test3', div3, 10, 10, 400, 300, {styles:{zIndex: 10}})
+      wnd3.show()
+
+      var div4 = document.createElement('div4')
+      const wnd4 = new MyWindow('Test4', div4, 10, 10, 400, 300, {styles:{zIndex: 11}})
+      wnd4.show()
 
       /*
       const div1 = document.createElement('div')
