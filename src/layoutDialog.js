@@ -19,7 +19,7 @@ class LayoutDialog extends Dialog {
    * @param {Object} items 
    */
   constructor(title, graph, layout, items, options = {}) {
-    super(title, null, graph, options)
+    super(title, null, graph, Object.assign({modal: false}, options))
     this.layout = layout
     this.items = items
     this.createFields()

@@ -21340,6 +21340,31 @@ module.exports = function(module) {
 
 /***/ }),
 
+/***/ "./src/compactTreeLayoutDialog.js":
+/*!****************************************!*\
+  !*** ./src/compactTreeLayoutDialog.js ***!
+  \****************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+const LayoutDialog = __webpack_require__(/*! ./layoutDialog */ "./src/layoutDialog.js")
+
+class CompactTreeLayoutDialog extends LayoutDialog {
+  constructor(title, graph, layout, options = {}) {
+    const items = [
+      {name: 'horizontal', type: 'checkbox'},
+      {name: 'invert', type: 'checkbox'},
+      {name: 'resizeParent', type: 'checkbox'}
+    ]
+    super(title, graph, layout, items, options)
+  }
+}
+
+module.exports = CompactTreeLayoutDialog
+
+
+/***/ }),
+
 /***/ "./src/constants.js":
 /*!**************************!*\
   !*** ./src/constants.js ***!
@@ -21473,10 +21498,11 @@ module.exports = Dialog
 const toml = __webpack_require__(/*! toml */ "./node_modules/toml/index.js")
 const Utils = __webpack_require__(/*! ./utils */ "./src/utils.js")
 const FastOrganicLayoutDialog = __webpack_require__(/*! ./fastOrganicLayoutDialog */ "./src/fastOrganicLayoutDialog.js")
+const CompactTreeLayoutDialog = __webpack_require__(/*! ./compactTreeLayoutDialog */ "./src/compactTreeLayoutDialog.js")
 
 // const MyWindow = require('./mywindow')
 // const Dialog = require('./dialog')
-const LayoutDialog = __webpack_require__(/*! ./layoutDialog */ "./src/layoutDialog.js")
+// const LayoutDialog = require('./layoutDialog')
 
 // windowの左上コーナーの位置と幅、高さ
 // const WINDOW_X = 50
@@ -21661,53 +21687,26 @@ class Editor extends mxEditor {
     // around the graph in the top, right corner of the window.
     this.outline = new mxOutline(this.graph, document.getElementById('outlineContainer'))
 
-    ////////////////////////////////////////////////////////////////////////////////
-    // レイアウト・スタイルは要検討
-
+    // レイアウト・スタイル
     // const layout = new mxCircleLayout(graph, 10)
-
-    /*
-    // 単独のvertexは無視される
-    const layout = new mxCompactTreeLayout(graph, false)
-    layout.useBoundingBox = false
-    layout.edgeRouting = false
-    layout.levelDistance = 30
-    layout.nodeDistance = 10
-    */
-
     // const layout = mxHierarchicalLayout(graph)
-
     // const layout = mxSwimlaneLayout(graph)
+    // this.layout = new mxParallelEdgeLayout(this.graph)
+    // const layout = new mxPartitionLayout(graph)
+    // const layout = new mxRadialTreeLayout(graph)
+    // layout.levelDistance = 80
+    // layout.autoRadius = true
+    // const layout = new mxStackLayout(graph)
 
-    // コンポジット 単独では使わない
-    // const layout = new mxCompositeLayout(graph)
+    // FastOrganicLayout
+    this.fastOrganicLayout = new mxFastOrganicLayout(this.graph)
+    this.fastOrganicLayout.disableEdgeStyle = false
+    
+    // CompactTreeLayout
+    this.compactTreeLayout = new mxCompactTreeLayout(this.graph, true, false)
 
     // edgとvertexの重なりを解消 ラベルをずらす
     this.layout2 = new mxEdgeLabelLayout(this.graph)
-
-    // 単独のvertexは無視される
-    this.layout = new mxFastOrganicLayout(this.graph)
-    this.layout.disableEdgeStyle = false
-    
-
-
-    /*
-    // 基本クラスなので使用しない
-    const layout = new mxGraphLayout(graph)
-    */
-
-    // this.layout = new mxParallelEdgeLayout(this.graph)
-
-    // const layout = new mxPartitionLayout(graph)
-
-    /*
-    // 単独のvertexは無視される
-    const layout = new mxRadialTreeLayout(graph)
-    layout.levelDistance = 80
-    layout.autoRadius = true
-    */
-
-    // const layout = new mxStackLayout(graph)
 
     ////////////////////////////////////////////////////////////////////////////////
 
@@ -21846,7 +21845,7 @@ class Editor extends mxEditor {
    */
   afterLoad(doLayout) {
     if (doLayout) {
-      this.layout.execute(this.graph.getDefaultParent())
+      this.fastOrganicLayout.execute(this.graph.getDefaultParent())
       this.layout2.execute(this.graph.getDefaultParent())
     }
     this.resetHistory()
@@ -22113,23 +22112,26 @@ class Editor extends mxEditor {
 
     // FastOrganicLayout
     $('button#fast-organic-layout').click(event => {
-      let prev = this.layout.disableEdgeStyle
-      const options = {
+      let disableEdgeStyle = this.fastOrganicLayout.disableEdgeStyle
+      new FastOrganicLayoutDialog('FastOrganicLayout', this.graph, this.fastOrganicLayout, {
         applyFunc: () => {
-          if (prev !== this.layout.disableEdgeStyle) {
+          console.log(disableEdgeStyle, this.fastOrganicLayout.disableEdgeStyle)
+          if (disableEdgeStyle !== this.fastOrganicLayout.disableEdgeStyle) {
+            console.log('setEdgeStyles')
             this.setEdgeStyles('all', mxConstants.STYLE_EDGE, mxConstants.EDGESTYLE_ORTHOGONAL)
           }
-          this.layout.execute(this.graph.getDefaultParent())
+          this.fastOrganicLayout.execute(this.graph.getDefaultParent())
         } 
-      }
-      const dialog = new FastOrganicLayoutDialog('FastOrganicLayout', this.graph, this.layout, options)
-      dialog.show()
+      }).show()
     })
 
     // CompactTreeLayout
     $('button#compact-tree-layout').click(event => {
-
-
+      new CompactTreeLayoutDialog('CompactTreeLayout', this.graph, this.compactTreeLayout, {
+        applyFunc: () => {
+          this.compactTreeLayout.execute(this.graph.getDefaultParent())
+        } 
+      }).show()
     })
 
     $('input#flag-edges').change(event => {
@@ -22192,7 +22194,7 @@ class Editor extends mxEditor {
 
 
 
-      
+
       // alert('未実装')
     })
   }
@@ -22298,7 +22300,7 @@ class LayoutDialog extends Dialog {
    * @param {Object} items 
    */
   constructor(title, graph, layout, items, options = {}) {
-    super(title, null, graph, options)
+    super(title, null, graph, Object.assign({modal: false}, options))
     this.layout = layout
     this.items = items
     this.createFields()
