@@ -56,7 +56,8 @@ td.mxWindowTitle {
 }
 td.mxWindowPane {
 	vertical-align: top;
-	padding: 0px;
+	/* padding: 0px; */
+	padding: 4px;
 }
 div.mxWindowPane {
 	overflow: hidden;

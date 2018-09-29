@@ -1,7 +1,11 @@
-const xmlbuilder = require('xmlbuilder')
+// const xmlbuilder = require('xmlbuilder')
 const toml = require('toml')
 const Utils = require('./utils')
 const FastOrganicLayoutDialog = require('./fastOrganicLayoutDialog')
+
+// const MyWindow = require('./mywindow')
+// const Dialog = require('./dialog')
+const LayoutDialog = require('./layoutDialog')
 
 // windowの左上コーナーの位置と幅、高さ
 // const WINDOW_X = 50
@@ -638,32 +642,17 @@ class Editor extends mxEditor {
 
     // FastOrganicLayout
     $('button#fast-organic-layout').click(event => {
-      const dialog = new FastOrganicLayoutDialog({
-        forceConstant: this.layout.forceConstant,
-        useInputOrigin: this.layout.useInputOrigin,
-        resetEdges: this.layout.resetEdges,
-        disableEdgeStyle: this.layout.disableEdgeStyle,
-        initialTemp: this.layout.initialTemp,
-        maxIterations: this.layout.maxIterations
-      })
-
-      dialog.show('FastOrganicLayout', 200, null, () => {
-        this.layout.forceConstant = dialog.forceConstant.value
-        this.layout.useInputOrigin = dialog.useInputOrigin.checked
-        this.layout.resetEdges = dialog.resetEdges.checked
-        let prev = this.layout.disableEdgeStyle
-        this.layout.disableEdgeStyle = dialog.disableEdgeStyle.checked
-        if (!this.layout.disableEdgeStyle) {
+      let prev = this.layout.disableEdgeStyle
+      const options = {
+        applyFunc: () => {
           if (prev !== this.layout.disableEdgeStyle) {
             this.setEdgeStyles('all', mxConstants.STYLE_EDGE, mxConstants.EDGESTYLE_ORTHOGONAL)
           }
-        }
-        this.layout.initialTemp = dialog.initialTemp.value
-        this.layout.maxIterations = dialog.maxIterations.value
-        this.layout.execute(this.graph.getDefaultParent())
-      }, () => {
-        dialog.close()
-      })
+          this.layout.execute(this.graph.getDefaultParent())
+        } 
+      }
+      const dialog = new FastOrganicLayoutDialog('FastOrganicLayout', this.graph, this.layout, options)
+      dialog.show()
     })
 
     // CompactTreeLayout
@@ -680,26 +669,60 @@ class Editor extends mxEditor {
     })
 
     $('button#action').click(event => {
-      // const selected = graph.getSelectionCell()
-      // if (selected) {
-      //   layout.root = selected
-      //   layout.execute(graph.getDefaultParent())
-      // }
 
-      // var div1 = document.createElement('div')
-      // var wnd1 = new MyWindow('div', div1, 100, 100, 200, 200, true, true)
-      // wnd1.setVisible(true)
-      // var div2 = document.createElement('table')
-      // var wnd2 = new MyWindow('table', div2, 100, 100, 200, 200, true, true)
-      // wnd2.setVisible(true)
+      /*
+      const selected = graph.getSelectionCell()
+      if (selected) {
+        layout.root = selected
+        layout.execute(graph.getDefaultParent())
+      }
+      */
 
-      // const lo = new mxParallelEdgeLayout(this.graph)
-      // lo.execute(this.graph.getDefaultParent())
+      /* 
+      const lo = new mxParallelEdgeLayout(this.graph)
+      lo.execute(this.graph.getDefaultParent())
+      */
 
-      // const lo = new mxEdgeLabelLayout(this.graph)
-      // lo.execute(this.graph.getDefaultParent())
+      /*
+      const lo = new mxEdgeLabelLayout(this.graph)
+      lo.execute(this.graph.getDefaultParent())
+      */
 
-      alert('未実装')
+      /*
+      var div1 = document.createElement('div')
+      const wnd1 = new MyWindow('Test', div1, null, 10, 400, 300)
+      wnd1.show()
+      */
+
+      /*
+      const div1 = document.createElement('div')
+      const dialog = new Dialog('Dialog!', div1, this.graph, false)
+      // dialog.show(200, 100)
+      dialog.show(null, null)
+      */
+
+      /*
+      this.layout.aaa = 1
+      this.layout.bbb = false
+
+      const dialog = new LayoutDialog('Dialog!', this.graph, this.layout, [
+        {name: 'aaa', type: 'text'},
+        {name: 'bbb', type: 'checkbox'},
+      ], {
+        applyFunc: () => {
+          console.log(dialog)
+          console.log(dialog.items)
+        }
+      })
+      dialog.show()
+      */
+
+
+
+
+
+      
+      // alert('未実装')
     })
   }
 }
