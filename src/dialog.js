@@ -46,14 +46,24 @@ class Dialog {
 
   /**
    * 
+   * @param {Integer} width 
+   * @param {Integer} height 
+   */
+  center(width, height) {
+    const rect = this.wnd.table.getBoundingClientRect()
+    const w = width || rect.width
+    const h = height || rect.height
+    return {
+      x: Math.max(0, document.body.scrollWidth / 2 - w / 2),
+      y: Math.max(10, (document.body.scrollHeight || document.documentElement.scrollHeight) / 2 - h * 2 / 3)
+    }
+  }
+
+  /**
+   * 
    */
   show() {
-    const w = this.options.width || 0
-    const h = this.options.height ||  0
-    const x = Math.max(0, document.body.scrollWidth / 2 - w / 2)
-    const y = Math.max(10, (document.body.scrollHeight || document.documentElement.scrollHeight) / 2 - h * 2 / 3)
-
-    this.wnd = new MyWindow(this.title, this.content, x, y, this.options.width, this.options.height, this.options)
+    this.wnd = new MyWindow(this.title, this.content, -9999, -9999, this.options.width, this.options.height, this.options)
 
     if (this.options.modal) {
       // モーダルダイアログ
@@ -77,6 +87,11 @@ class Dialog {
     }
 
     this.wnd.setVisible(true)
+
+    // ダイアログを中央に置く。
+    const center = this.center()
+    this.wnd.setLocation(center.x, center.y)
+
     return this.wnd
   }
 

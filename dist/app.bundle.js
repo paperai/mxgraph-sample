@@ -21352,9 +21352,19 @@ const LayoutDialog = __webpack_require__(/*! ./layoutDialog */ "./src/layoutDial
 class CompactTreeLayoutDialog extends LayoutDialog {
   constructor(title, graph, layout, options = {}) {
     const items = [
-      {name: 'horizontal', type: 'checkbox'},
-      {name: 'invert', type: 'checkbox'},
-      {name: 'resizeParent', type: 'checkbox'}
+      {name: 'groupPadding', input: 'text', type: 'integer'},
+      {name: 'groupPaddingTop', input: 'text', type: 'integer'},
+      {name: 'groupPaddingRight', input: 'text', type: 'integer'},
+      {name: 'groupPaddingBottom', input: 'text', type: 'integer'},
+      {name: 'groupPaddingLeft', input: 'text', type: 'integer'},
+      {name: 'levelDistance', input: 'text', type: 'integer'},
+      {name: 'nodeDistance', input: 'text', type: 'integer'},
+      {name: 'horizontal', input: 'checkbox'},
+      {name: 'invert', input: 'checkbox'},
+      {name: 'resizeParent', input: 'checkbox'},
+      {name: 'moveTree', input: 'checkbox'},
+      {name: 'visited', input: 'checkbox'},
+      {name: 'resetEdges', input: 'checkbox'},
     ]
     super(title, graph, layout, items, options)
   }
@@ -21440,14 +21450,24 @@ class Dialog {
 
   /**
    * 
+   * @param {Integer} width 
+   * @param {Integer} height 
+   */
+  center(width, height) {
+    const rect = this.wnd.table.getBoundingClientRect()
+    const w = width || rect.width
+    const h = height || rect.height
+    return {
+      x: Math.max(0, document.body.scrollWidth / 2 - w / 2),
+      y: Math.max(10, (document.body.scrollHeight || document.documentElement.scrollHeight) / 2 - h * 2 / 3)
+    }
+  }
+
+  /**
+   * 
    */
   show() {
-    const w = this.options.width || 0
-    const h = this.options.height ||  0
-    const x = Math.max(0, document.body.scrollWidth / 2 - w / 2)
-    const y = Math.max(10, (document.body.scrollHeight || document.documentElement.scrollHeight) / 2 - h * 2 / 3)
-
-    this.wnd = new MyWindow(this.title, this.content, x, y, this.options.width, this.options.height, this.options)
+    this.wnd = new MyWindow(this.title, this.content, -9999, -9999, this.options.width, this.options.height, this.options)
 
     if (this.options.modal) {
       // モーダルダイアログ
@@ -21471,6 +21491,11 @@ class Dialog {
     }
 
     this.wnd.setVisible(true)
+
+    // ダイアログを中央に置く。
+    const center = this.center()
+    this.wnd.setLocation(center.x, center.y)
+
     return this.wnd
   }
 
@@ -22110,16 +22135,12 @@ class Editor extends mxEditor {
       event.target.value = ''
     })
 
+    // this.setEdgeStyles('all', mxConstants.STYLE_EDGE, mxConstants.EDGESTYLE_ORTHOGONAL)
+
     // FastOrganicLayout
     $('button#fast-organic-layout').click(event => {
-      let disableEdgeStyle = this.fastOrganicLayout.disableEdgeStyle
       new FastOrganicLayoutDialog('FastOrganicLayout', this.graph, this.fastOrganicLayout, {
-        applyFunc: () => {
-          console.log(disableEdgeStyle, this.fastOrganicLayout.disableEdgeStyle)
-          if (disableEdgeStyle !== this.fastOrganicLayout.disableEdgeStyle) {
-            console.log('setEdgeStyles')
-            this.setEdgeStyles('all', mxConstants.STYLE_EDGE, mxConstants.EDGESTYLE_ORTHOGONAL)
-          }
+        onApply: () => {
           this.fastOrganicLayout.execute(this.graph.getDefaultParent())
         } 
       }).show()
@@ -22128,7 +22149,7 @@ class Editor extends mxEditor {
     // CompactTreeLayout
     $('button#compact-tree-layout').click(event => {
       new CompactTreeLayoutDialog('CompactTreeLayout', this.graph, this.compactTreeLayout, {
-        applyFunc: () => {
+        onApply: () => {
           this.compactTreeLayout.execute(this.graph.getDefaultParent())
         } 
       }).show()
@@ -22182,7 +22203,7 @@ class Editor extends mxEditor {
         {name: 'aaa', type: 'text'},
         {name: 'bbb', type: 'checkbox'},
       ], {
-        applyFunc: () => {
+        onApply: () => {
           console.log(dialog)
           console.log(dialog.items)
         }
@@ -22217,12 +22238,12 @@ const LayoutDialog = __webpack_require__(/*! ./layoutDialog */ "./src/layoutDial
 class FastOrganicLayoutDialog extends LayoutDialog {
   constructor(title, graph, layout, options = {}) {
     const items = [
-      {name: 'forceConstant', type: 'text'},
-      {name: 'initialTemp', type: 'text'},
-      {name: 'maxIterations', type: 'text'},
-      {name: 'useInputOrigin', type: 'checkbox'},
-      {name: 'resetEdges', type: 'checkbox'},
-      {name: 'disableEdgeStyle', type: 'checkbox'}
+      {name: 'forceConstant', input: 'text', type: 'integer'},
+      {name: 'initialTemp', input: 'text', type: 'integer'},
+      {name: 'maxIterations', input: 'text', type: 'integer'},
+      {name: 'useInputOrigin', input: 'checkbox'},
+      {name: 'resetEdges', input: 'checkbox'}
+      // {name: 'disableEdgeStyle', input: 'checkbox'}
     ]
     super(title, graph, layout, items, options)
   }
@@ -22295,7 +22316,7 @@ class LayoutDialog extends Dialog {
    * @param {Object} options
    *   MyWindowのオプション
    *   tableClassName: form table のクラス名。Default: layoutTable 
-   *   applyFunc: Applyボタンのコールバック関数
+   *   onApply: Applyボタンのコールバック関数
    * @param {mxLayout} layout 
    * @param {Object} items 
    */
@@ -22314,15 +22335,22 @@ class LayoutDialog extends Dialog {
 
     // エレメントを作成していく
     for (let item of this.items) {
-      item['element'] = form[Elements[item.type]['func']](item.name, this.layout[item.name])
+      item['element'] = form[Elements[item.input]['func']](item.name, this.layout[item.name])
     }
     form.addButtons([
       {label: 'Apply', callback: () => {
-        // applyFunc()を呼び出す前に、値を取得してlayoutにセットする
+        // onApply()を呼び出す前に、値を取得してlayoutにセットする
         for (let item of this.items) {
-          this.layout[item.name] = item['element'][Elements[item.type]['value']]
+          const value = item['element'][Elements[item.input]['value']]
+          if (item.type === 'integer') {
+            this.layout[item.name] = parseInt(value, 10)
+          } else if (item.type === 'float') {
+            this.layout[item.name] = parseFloat(value)
+          } else {
+            this.layout[item.name] = value
+          }
         }
-        this.options.applyFunc()
+        this.options.onApply()
       }}, 
       {label: 'Close', callback: this.close.bind(this)}
     ])

@@ -614,16 +614,12 @@ class Editor extends mxEditor {
       event.target.value = ''
     })
 
+    // this.setEdgeStyles('all', mxConstants.STYLE_EDGE, mxConstants.EDGESTYLE_ORTHOGONAL)
+
     // FastOrganicLayout
     $('button#fast-organic-layout').click(event => {
-      let disableEdgeStyle = this.fastOrganicLayout.disableEdgeStyle
       new FastOrganicLayoutDialog('FastOrganicLayout', this.graph, this.fastOrganicLayout, {
-        applyFunc: () => {
-          console.log(disableEdgeStyle, this.fastOrganicLayout.disableEdgeStyle)
-          if (disableEdgeStyle !== this.fastOrganicLayout.disableEdgeStyle) {
-            console.log('setEdgeStyles')
-            this.setEdgeStyles('all', mxConstants.STYLE_EDGE, mxConstants.EDGESTYLE_ORTHOGONAL)
-          }
+        onApply: () => {
           this.fastOrganicLayout.execute(this.graph.getDefaultParent())
         } 
       }).show()
@@ -632,7 +628,7 @@ class Editor extends mxEditor {
     // CompactTreeLayout
     $('button#compact-tree-layout').click(event => {
       new CompactTreeLayoutDialog('CompactTreeLayout', this.graph, this.compactTreeLayout, {
-        applyFunc: () => {
+        onApply: () => {
           this.compactTreeLayout.execute(this.graph.getDefaultParent())
         } 
       }).show()
@@ -686,7 +682,7 @@ class Editor extends mxEditor {
         {name: 'aaa', type: 'text'},
         {name: 'bbb', type: 'checkbox'},
       ], {
-        applyFunc: () => {
+        onApply: () => {
           console.log(dialog)
           console.log(dialog.items)
         }

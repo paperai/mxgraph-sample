@@ -14,7 +14,7 @@ class LayoutDialog extends Dialog {
    * @param {Object} options
    *   MyWindowのオプション
    *   tableClassName: form table のクラス名。Default: layoutTable 
-   *   applyFunc: Applyボタンのコールバック関数
+   *   onApply: Applyボタンのコールバック関数
    * @param {mxLayout} layout 
    * @param {Object} items 
    */
@@ -33,15 +33,22 @@ class LayoutDialog extends Dialog {
 
     // エレメントを作成していく
     for (let item of this.items) {
-      item['element'] = form[Elements[item.type]['func']](item.name, this.layout[item.name])
+      item['element'] = form[Elements[item.input]['func']](item.name, this.layout[item.name])
     }
     form.addButtons([
       {label: 'Apply', callback: () => {
-        // applyFunc()を呼び出す前に、値を取得してlayoutにセットする
+        // onApply()を呼び出す前に、値を取得してlayoutにセットする
         for (let item of this.items) {
-          this.layout[item.name] = item['element'][Elements[item.type]['value']]
+          const value = item['element'][Elements[item.input]['value']]
+          if (item.type === 'integer') {
+            this.layout[item.name] = parseInt(value, 10)
+          } else if (item.type === 'float') {
+            this.layout[item.name] = parseFloat(value)
+          } else {
+            this.layout[item.name] = value
+          }
         }
-        this.options.applyFunc()
+        this.options.onApply()
       }}, 
       {label: 'Close', callback: this.close.bind(this)}
     ])
