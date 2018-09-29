@@ -3,6 +3,7 @@ const toml = require('toml')
 const Utils = require('./utils')
 const FastOrganicLayoutDialog = require('./fastOrganicLayoutDialog')
 const CompactTreeLayoutDialog = require('./compactTreeLayoutDialog')
+const RadialTreeLayoutDialog = require('./radialTreeLayoutDialog')
 
 const MyWindow = require('./mywindow')
 // const Dialog = require('./dialog')
@@ -208,6 +209,9 @@ class Editor extends mxEditor {
     
     // CompactTreeLayout
     this.compactTreeLayout = new mxCompactTreeLayout(this.graph, true, false)
+
+    // RadialTreeLayout
+    this.radialTreeLayout = new mxRadialTreeLayout(this.graph)
 
     // edgとvertexの重なりを解消 ラベルをずらす
     this.layout2 = new mxEdgeLabelLayout(this.graph)
@@ -634,6 +638,15 @@ class Editor extends mxEditor {
       }).show()
     })
 
+    // RadialTreeLayout
+    $('button#radial-tree-layout').click(event => {
+      new RadialTreeLayoutDialog('RadialTreeLayout', this.graph, this.radialTreeLayout, {
+        onApply: () => {
+          this.radialTreeLayout.execute(this.graph.getDefaultParent())
+        } 
+      }).show()
+    })
+
     $('input#flag-edges').change(event => {
       const $label = $(event.target).parent()
       const enable = $label.hasClass('active')
@@ -661,6 +674,7 @@ class Editor extends mxEditor {
       lo.execute(this.graph.getDefaultParent())
       */
 
+      /*
       var div1 = document.createElement('div1')
       const wnd1 = new MyWindow('Test1', div1, 10, 10, 400, 300, {styles:{zIndex: 9001}})
       wnd1.show()
@@ -676,6 +690,7 @@ class Editor extends mxEditor {
       var div4 = document.createElement('div4')
       const wnd4 = new MyWindow('Test4', div4, 10, 10, 400, 300, {styles:{zIndex: 11}})
       wnd4.show()
+      */
 
       /*
       const div1 = document.createElement('div')
@@ -705,7 +720,7 @@ class Editor extends mxEditor {
 
 
 
-      // alert('未実装')
+      alert('未実装')
     })
   }
 }
